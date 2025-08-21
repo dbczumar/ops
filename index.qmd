@@ -1,0 +1,31 @@
+# The Big Book of Agent Ops {.unnumbered}
+
+Welcome to **The Big Book of Agent Ops** - your comprehensive guide to deploying quality agentic applications safely and reliably.
+
+## What You'll Learn
+
+This book covers the evolution from MLOps to LLMOps to AgentOps, focusing on:
+
+- **Background and Context**: Understanding what agents are and how they differ from traditional ML systems
+- **Principles**: Applying DevOps principles to agentic systems 
+- **Implementation**: People, processes, and technology for successful Agent Ops
+
+## Who This Book Is For
+
+- AI Engineers building production agent systems
+- Data Engineers working with agentic pipelines  
+- Software Engineers integrating AI agents
+- Product Managers overseeing AI initiatives
+- Platform Engineers deploying agent infrastructure
+
+## How to Use This Book
+
+Each chapter builds on previous concepts while remaining modular enough to reference independently. Code examples are provided throughout, with complete implementations available in the `examples/` directory.
+
+## Contributing
+
+This is a community-driven project. See our [contribution guide](https://github.com/your-org/big-book-of-agent-ops) for how to get involved.
+
+---
+
+*Let's build better agent systems together.*

@@ -1,0 +1,141 @@
+[DRAFT] Table of contents
+PART 1 Background and context
+1.1 Evolving trends in the industry:
+What is an agent?
+How does it differ from an LLM, prompt, RAG system, etc.?
+From MLOps to LLMOps to AgentOps
+Key differences between each 
+Definition of Agent Ops
+Deploying quality agentic applications to users safely and reliably
+Agent Ops antipatterns
+Starting with a use case that is too broad 
+Example: internal chatbot to address every kind of question a company employee could ask
+Starting with an agent design that is too complex
+Using a supervisor sub-agent architecture when a deterministic chain of agents can address the question
+Not building evals and iterating systematically
+Playing whack-a-mole with errors rather than properly characterising errors and building a comprehensive test suite. 
+1.2 Reference Agent Ops architecture 
+Data Preprocessing and Indexing
+Key differences with traditional ETL
+Focus on unstructured data 
+Information extraction with LLMs
+Vector databases as sinks
+Pipeline architecture
+Incremental ingestion
+Unstructured data processing
+information extraction
+Summarisation
+Multi-modal data processing
+Structured data processing
+Production considerations
+ACID transactions
+Quality monitoring
+Failure notification and handling
+Agent Design
+Architecture - talk briefly about existing arch patterns and share external sources
+What to think about when designing agents
+DIY v.s. Code-first Frameworks vs. “Low Code”  - pros and cons
+Talk about Databricks features like Agent Bricks and DSPy as an example?
+Definitely address other frameworks like Langchain
+Guardrails
+Evaluation (Testing pyramid)
+Manual 
+Automated
+Offline
+Online (Monitoring)
+Feedback process
+Trace collections
+Production telemetry
+Human annotations
+Don’t reinvent the wheel - existing telemetry best practices from DevOps
+Securing user data
+1.3 Agent Ops Deployment Pipeline
+Anatomy of a deployment pipeline
+Configuration management
+❌ Configuration in code (pydantic)
+✅Configuration in declarative files - YAML / JSON
+Infrastructure and resource management
+Automated testing
+PART 2 Principles of Agent Ops
+Devops principles still apply (as outlined in The DevOps Handbook)
+The principles of flow
+Continuous Integration
+Quick feedback through fast testing
+Automated testing
+Easily rollback agent and tool versions during failure
+The principles of feedback
+Key differences with feedback in Gen AI systems compared to traditional software engineering
+Gen AI systems require humans to analyse failure modes and characterise them
+Axial coding
+Transition matrices for agent trajectories
+The principles of continuous learning and integration
+Telemetry and observability
+Evolutionary architectures applied to Gen AI
+Modular agent design
+Monolith with the app v.s. as a separate service (or microservice)
+Composing apps & apps, composing apps & endpoints
+PART 3 People, process and technology
+Hidden technical debt of Gen AI systems: stakeholder management has increased dramatically, increasing the importance of coupling organizational change with technology change
+Hidden Technical Debt of GenAI Systems
+Identifying value streams
+Work with early adopters first
+Roles and responsibilities in a Gen AI project
+AI Engineer
+Data Engineer 
+Software Engineer 
+SME 
+Product Manager 
+Executive sponsor
+Platform Engineer
+
+
+
+Rough notes @
+
+Agent development
+Focused on mlflow 3.0
+Go through a canonical end-to-end multi-agent architecture
+Must have ETL because this is significant step for customers 
+Must have multi-agent design - each agent is it’s own endpoint? Or subagents are present in one Langgraph instance. Provisioning separate endpoints is more time consuming but less modularizable
+Must have offline and online evals
+Error analysis
+Designing long-term and short term memory
+Access to tools (UC, UC tools, managed MCP, custom MCP, External APIs, standard Python tools, UC connections)
+ETL 
+Multi-modal documents
+PDFs 
+Information Extraction 
+Our ETL is built on append-only systems, not ready for CRUD which knowledge bases require 
+Have to write CRUD operations ourselves.
+Agent Evaluation - talking about metrics to use, guidance on translating offline evals (automated and human-feedback-based) to online evals running in production
+Maintaining eval datasets
+
+Agent Deployment
+Clarifying scenarios to use different eval tools - Evaluation + Monitoring + Labelling APIs in MLflow
+Translating llms, tools, orchestration to dev/test/prod
+Cost concerns from increased infrastructure resource management. To have duplicate resources for MCP servers, vector search endpoints, tables, Lakebase tables lead to spiraling costs 
+Just do unit testing in staging env? Resources only provisioned in Dev and Prod
+Does MCP on Databricks support Oauth from external parties?
+Painful and tedious but we cannot neglect a section specifically on auth :( 
+Auth management using Mlflow resources AND alternatives if MLflow Resource doesn’t work eg. Lakebase
+Databricks Asset Bundles some artefacts can be created declaratively but others like Vector Search doesn’t have an existing bundle
+Service obs - how do we know if the agents and tools are online (endpoint health)?
+
+
+---- REFERENCES
+
+
+Orosz, G. (2025, March 25). AI Engineering in the real world. The Pragmatic Engineer. https://newsletter.pragmaticengineer.com/p/ai-engineering-in-the-real-world
+Building with AI. (n.d.). incident.io. https://incident.io/building-with-ai
+Why we built our own AI tooling suite | Building with AI. (n.d.). incident.io. https://incident.io/building-with-ai/built-our-own-ai-tooling
+LLM Inference Performance Engineering: Best Practices | DataBricks blog. (n.d.). Databricks. https://www.databricks.com/blog/llm-inference-performance-engineering-best-practices
+Optimizing LLM prompts for low latency | Building with AI. (n.d.). incident.io. https://incident.io/building-with-ai/optimizing-llm-prompts#case-study-planning-grafana-dashboards-for-an-incident
+Hamel Husain. (2025, August 15). From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres [Video]. YouTube. https://www.youtube.com/watch?v=N-qAOv_PNPc
+The DevOps Handbook: How to Create World-Class Agility, Reliability, & Security in Technology Organizations eBook : Kim bestselling author of The, Gene, Humble, Jez, Debois, Patrick, Willis, John, Forsgren, Nicole: Amazon.co.uk: Books. (n.d.). https://www.amazon.co.uk/DevOps-Handbook-World-Class-Reliability-Organizations-ebook/dp/B0F7J1WWQD?ref_=ast_author_mpb
+[Eval] How to setup EVals for Agents. (n.d.). https://maven.com/p/a58f3f/how-to-setup-evals-for-agents
+Learn Agentic AI: Setting agents metrics and evaluations. (n.d.). https://maven.com/p/cce4f3/learn-agentic-ai-setting-agents-metrics-and-evaluations
+Evaluating Agentic AI applications beyond vibe checks. (n.d.). https://maven.com/p/6f0e97/evaluating-agentic-ai-applications-beyond-vibe-checks
+[Eval] Online evals and production monitoring. (n.d.). https://maven.com/p/d792aa/online-evals-and-production-monitoring
+Husain, H., & Shankar, S. (n.d.). Frequently Asked Questions (And Answers) about AI Evals – Hamel’s blog. Hamel’s Blog. https://hamel.dev/blog/posts/evals-faq/
+
+

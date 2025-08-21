@@ -1,0 +1,61 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "The Big Book of Agent Ops"
+  subtitle: "From MLOps to LLMOps to AgentOps"
+  author: "Community Contributors"
+  date: today
+  
+  chapters:
+    - index.qmd
+    
+    - part: "Part 1: Background and Context"
+      chapters:
+        - part1/evolving-trends.qmd
+        - part1/reference-architecture.qmd
+        - part1/deployment-pipeline.qmd
+    
+    - part: "Part 2: Principles of Agent Ops"
+      chapters:
+        - part2/devops-principles.qmd
+        - part2/flow-principles.qmd
+        - part2/feedback-principles.qmd
+        - part2/continuous-learning.qmd
+    
+    - part: "Part 3: People, Process and Technology"
+      chapters:
+        - part3/hidden-technical-debt.qmd
+        - part3/stakeholder-management.qmd
+        - part3/roles-responsibilities.qmd
+        - part3/implementation-examples.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    code-tools: true
+    code-copy: true
+    fig-cap-location: bottom
+    crossref:
+      fig-title: "Figure"
+      tbl-title: "Table"
+    
+  pdf:
+    documentclass: scrbook
+    toc: true
+    toc-depth: 3
+    fig-cap-location: bottom
+    keep-tex: false
+
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  error: false
+
+bibliography: references/references.bib
+csl: references/apa.csl

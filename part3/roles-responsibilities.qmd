@@ -1,0 +1,14 @@
+# Roles and Responsibilities
+
+## Introduction
+
+Defining team structures and responsibilities for agent operations.
+
+## Key Roles
+
+- Agent Engineers
+- MLOps Engineers
+- Data Scientists
+- Platform Engineers
+
+*Content to be developed*

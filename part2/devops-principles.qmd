@@ -1,0 +1,14 @@
+# DevOps Principles for Agent Ops
+
+## Introduction
+
+This chapter explores how traditional DevOps principles apply to Agent Operations.
+
+## Key Principles
+
+- Continuous Integration and Deployment
+- Infrastructure as Code
+- Monitoring and Observability
+- Automation
+
+*Content to be developed*

@@ -1,0 +1,13 @@
+# Stakeholder Management
+
+## Introduction
+
+Managing stakeholder expectations and communication in agent ops projects.
+
+## Topics
+
+- Communication strategies
+- Expectation management
+- Success metrics definition
+
+*Content to be developed*

@@ -1,0 +1,32 @@
+# Principle 3 The technical practices of learning
+
+Not just about technical systems. significant coordination overhead with stakeholders, product and end users 
+
+## Context
+
+- The goal is not to build one successful application, but many ones repeatedly. 
+- Large organisations have many business units that would improve their daily work with generative AI. The number of potential generative AI use cases in an organisation is very large. 
+- Typical question we face is not only how to ensure the quality of a single POC or MVP, but how to build reliable best practices that allow an organisation to scale how the organisation applies generative AI to improve business practices. 
+- Here are some recommendations
+
+## Standardised frameworks
+- DABs
+
+## Reference architectures
+Contains all components an agentic application should have. Design considerations and how to implement them. 
+
+Captured through both code and documentation 
+
+Can be opinionated. For example for regulated industries, they might specify what every input and output request should go through a guardrail step that ensures no PII data is mentioned or used. 
+
+## Technical best practices
+
+## Business stakeholder education
+
+Generative AI is not only a paradigm shift for how developers build applications, but how business users interact and use applications as well. 
+
+First MVPs are hard because both developers and business users go through a journey learning about what is and is not possible. 
+
+For developers, they have to fill in their knowledge gaps. Software engineers might be new to the idea of data analysis and developing LLM judges. Machine Learning practitioners can be surprised by the amount of ETL and UI code they have to produce. Business users also may start with high expectations that may have to be calibrated 
+
+Example 

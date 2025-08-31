@@ -15,14 +15,14 @@ book:
       chapters:
         - part1/evolving-trends.qmd
         - part1/reference-architecture.qmd
-        - part1/deployment-pipeline.qmd
+        - part1/1.3_deployment-pipeline.qmd
     
     - part: "Part 2: Principles of Agent Ops"
       chapters:
-        - part2/devops-principles.qmd
-        - part2/flow-principles.qmd
-        - part2/feedback-principles.qmd
-        - part2/continuous-learning.qmd
+        - part2/2.1_intro_devops-principles.qmd
+        - part2/2.2_flow-principles.qmd
+        - part2/2.3_feedback-principles.qmd
+        - part2/2.4_continuous-learning.qmd
     
     - part: "Part 3: People, Process and Technology"
       chapters:
@@ -58,4 +58,4 @@ execute:
   error: false
 
 bibliography: references/references.bib
-csl: references/apa.csl
+# csl: references/apa.csl

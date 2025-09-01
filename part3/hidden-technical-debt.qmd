@@ -3,7 +3,7 @@
 Modern agent systems move fast, often faster than our ability to harden them. 
 
 **Technical debt** accumulates when we ship quick fixes that compromise long-term reliability, safety, and maintainability. 
-The focus in this section is where that debt hides in agentic systems and how cross-functional teams can control it.
+What follows is a curated set of the most common, high-impact hidden debts in agentic systems and how cross-functional teams can control them.
 
 ## The Debts We Already Knew
 
@@ -18,29 +18,31 @@ Agent systems inherit all of these, and add new, distinctly *agentic* forms of d
 ## Tool Sprawl
 
 As more tools are added (APIs, SQL functions, workflow triggers), catalogs get messy: duplicates, near-duplicates, and unclear ownership. 
-The agent must first pick the right tool, then map user intent to the right parameters—both are frequent failure points when tools overlap.
+The agent must first pick the right tool, then map user intent to the right parameters, both are frequent failure points when tools overlap.
 
 **How to identify**
+
 - Similar tools (weekly vs monthly sales) both appear in traces
 - PRs re-implement existing adapters. There is an unclear “source of truth”
 - Wrong tool selected or parameter mismatches in error logs
 - Teams can’t list available tools or owners
 
 **Impact**
+
 - Accuracy drops from mis-routing. Higher latency and cost from retries
 - Harder evaluation and debugging. Fragile behavior across environments
 - Security and governance gaps when tools bypass review
 
 **How to control**
 
-- Maintain a tool registry (owner, purpose, version, examples, scope). As an option, use MCP for typed schemas, discovery, and central policy (scopes/rate limits) to deduplicate adapters and reduce wrong-tool calls.
-- Consolidate or deprecate overlaps. Prefer fewer, clearer tools.
-- Add tool-choice and parameterization evals, plus schema validation at call time.
-- Keep chains simple. Introduce multi-agent orchestration only when metrics justify it.
+- Maintain a tool registry (owner, purpose, version, examples, scope). As an option, use MCP for typed schemas, discovery, and central policy to deduplicate adapters and reduce wrong-tool calls
+- Consolidate or deprecate overlaps. Prefer fewer, clearer tools
+- Add tool-choice and parameterization evals, plus schema validation at call time
+- Keep chains simple. Introduce multi-agent orchestration only when metrics justify it
 
 ## Prompt Stuffing
 
-Prompts grow into “god prompts” as teams append rules for new edge cases. Length alone isn’t the problem—contradictions, staleness, and order-dependence are—making behavior brittle and slow to iterate.
+Prompts grow into “god prompts” as teams append rules for new edge cases. Length alone isn’t the problem: contradictions, staleness, and order-dependence are making behavior brittle and slow to iterate.
 
 **How to identify**
 
@@ -50,15 +52,15 @@ Prompts grow into “god prompts” as teams append rules for new edge cases. Le
 
 **Impact**
 
-- Inconsistent outputs. Harder A/B testing and RCA
+- Inconsistent outputs. Harder A/B testing and root cause analysis (RCA)
 - Slower iteration. Hidden coupling between rules
 - Drift from policy and source of truth
 
 **How to control**
 
-- Split into smaller, role/task prompts. 
+- Split into smaller, role/task prompts 
 - Retrieve long policies/FAQs
-- Version prompts. 
+- Version prompts 
 - Test with golden sets and A/B or offline evals
 - Adopt prompt templates/patterns
 - Document intent and scope
@@ -145,10 +147,10 @@ As agents scale, services, queues, and roles multiply. Orchestration deepens, ow
 
 **How to identify**
 
-- Traces show excessive hops/spans; frequent circular routes or timeouts
+- Traces show excessive hops/spans with frequent circular routes or timeouts
 - On-call toil: many handoffs to fix a single incident
-- Dependency maps are out of date; unclear ownership for tools/agents
-- Rollbacks are slow or manual; environment drift is common
+- Dependency maps are out of date. Unclear ownership for tools/agents
+- Rollbacks are slow or manual. Environment drift is common
 
 **Impact**
 
@@ -157,15 +159,15 @@ As agents scale, services, queues, and roles multiply. Orchestration deepens, ow
 
 **How to control**
 
-- Simplify topology; prefer fewer roles/agents that clearly earn their keep
+- Simplify topology, prefer fewer roles/agents that clearly earn their keep
 - Maintain an agent/tool registry with owners and deprecation paths
-- Standardize tracing/metrics/logging; enforce SLOs and budgets at boundaries
+- Standardize tracing/metrics/logging, enforce SLOs and budgets at boundaries
 - Infrastructure as code with staged deploys and one-click rollback
 - Periodic “debt sprints” to remove dead code, unused tools, and redundant queues
 
 ## Inadequate Human Feedback Loops
 
-It’s easy to ship something that “looks good” in demos but misses real-world nuance. Without a feedback flywheel, quality plateaus and blind spots persist.
+It’s easy to ship something that “looks good” in demos but misses real-world nuance. Without a feedback loop, quality plateaus and blind spots persist.
 
 **How to identify**
 
@@ -208,12 +210,12 @@ Scope and expectations drift when sponsors, users, and adjacent teams aren’t e
 
 - Set high-touch cadences with users/sponsors; publish decisions
 - Keep a living in/out of scope list per release
-- Educate on capability limits; reset expectations with measured results
+- Educate on capability limits, reset expectations with measured results
 - Align on acceptance criteria tied to your eval metrics
 
 ## Safety & Security
 
-Agents interact with untrusted inputs (users, webpages, retrieved docs) and powerful tools (APIs, databases). Without explicit safeguards, they can be steered into harmful content, data leaks, or unintended actions—often via subtle prompt-injection or poisoned context rather than “obvious hacks.”
+Agents interact with untrusted inputs (users, webpages, retrieved docs) and powerful tools (APIs, databases). Without explicit safeguards, they can be steered into harmful content, data leaks, or unintended actions, often via subtle prompt-injection or poisoned context rather than “obvious hacks.”
 
 **How to identify**
 
@@ -221,7 +223,7 @@ Agents interact with untrusted inputs (users, webpages, retrieved docs) and powe
 - PII in logs/outputs (user names, emails, phone numbers, addresses, IDs show up in traces or chat transcripts)
 - Secrets in logs/outputs (API keys, auth tokens, DB passwords or connection strings appear in error dumps or tool responses)
 - Redaction misses, masking fails on edge cases or only partial fields are redacted
-- Unusual data egress, calls to unexpected domains orregions, large payloads, or spikes in outbound traffic unrelated to user actions
+- Unusual data egress, calls to unexpected domains or regions, large payloads, or spikes in outbound traffic unrelated to user actions
 - Spikes in high-risk actions (refunds, deletes) or calls to new/unknown endpoints
 - Safety classifiers flag toxicity/self-harm/abuse in inputs/outputs
 - Anomalous routing or role jumps (e.g., communicator invoking billing tools)

@@ -171,7 +171,7 @@ return format_status(status)
 - Levenshtein distance
 - Native full-text search
 
-## Unoptimized Retrieval
+### Unoptimized Retrieval
 
 ❌ **Bad**: Single dense index, oversized chunks, no filters or reranking
 
@@ -183,7 +183,7 @@ return format_status(status)
 - Add reranking
 - Evaluate recall/precision and citation coverage regularly
 
-## Ungoverned Tools
+### Ungoverned Tools
 
 ❌ **Bad**: Agents can call any endpoint or run arbitrary code with broad credentials
 
@@ -193,7 +193,7 @@ return format_status(status)
 - Per-tool permissions, timeouts, and rate limits
 - Audit logs and PII redaction for inputs/outputs
 
-## No Rollback / Versioning
+### No Rollback / Versioning
 
 ❌ **Bad**: Shipping unlogged agents you can’t reproduce
 

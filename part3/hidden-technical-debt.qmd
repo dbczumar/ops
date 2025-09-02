@@ -1,6 +1,6 @@
 # Hidden Technical Debt in Agent Systems
 
-Modern agent systems move fast, often faster than our ability to harden them. 
+Companies like OpenAI and Anthropic release new model capabilities every few months. These models enable developers to build agentic systems with more complex tool-calling capabilities that were not possible before. Engineering teams, accustomed to longer development cycles, struggle to integrate resilience practices into these accelerated timelines.
 
 **Technical debt** accumulates when we ship quick fixes that compromise long-term reliability, safety, and maintainability. 
 What follows is a curated set of the most common, high-impact hidden debts in agentic systems and how cross-functional teams can control them.
@@ -143,7 +143,43 @@ When the knowledge base, indexes, or tool schemas drift from what the agent expe
 
 ## Infrastructure complexity
 
-As agents scale, services, queues, and roles multiply. Orchestration deepens, ownership blurs, and simple fixes require touching many moving parts—raising fragility and time to restore service.
+Infrastructure complexity is the debt that occurs when a simple agent stack grows into a mesh of components orchestator, retriever and index, tool gateway, queues for workers, safety filters, observability and more roles and configs. Each request now takes more hops, ownership blurs, configs drift, and small changes require touching multiple services, increasing fragility and the time to restore service.
+
+Example: "returns agent" before, during MVP stage` vs after when several capabilities have been added and the infrastructure complexity has increased. 
+
+#### Before (MVP) {-}
+```{mermaid}
+flowchart LR
+    %% Infrastructure complexity — "returns agent" before
+    User --> AppServer
+    AppServer --> BillingAPI
+    BillingAPI --> Response
+```
+
+#### After (scaled) {-}
+```{mermaid}
+flowchart TD
+     %% Infrastructure complexity — "returns agent" after
+    User --> APIGateway
+    APIGateway --> Orchestrator
+    Orchestrator --> RetrieverIndex
+    Orchestrator --> ToolGateway
+    ToolGateway --> FraudAPI
+    ToolGateway --> ImageClassifier
+    ToolGateway --> WarehouseAPI
+    ToolGateway --> PaymentsAPI
+    Orchestrator --> WorkQueue
+    WorkQueue --> HumanReview
+    Orchestrator --> Communicator
+    Communicator --> Response
+
+    %% Failure chain from a tiny upstream change
+    FraudAPI --> SchemaChange
+    SchemaChange --> AdapterRetries
+    AdapterRetries --> QueueBacklog
+    QueueBacklog --> Reroutes
+
+```
 
 **How to identify**
 

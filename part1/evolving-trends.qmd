@@ -25,11 +25,23 @@ graph TD
 
 ### LLM vs RAG vs Agent
 
-| System Type | Capabilities | Use Cases | Limitations |
-|-------------|-------------|-----------|-------------|
-| **LLM** | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions |
-| **RAG** | Knowledge retrieval + generation | Document search, knowledge base | Limited to retrieval |
-| **Agent** | Dynamic reasoning + actions | Task automation, workflows | Complexity, reliability |
+| Pattern | What it is | Capabilities | Use Cases | Limitations | Ops Maturity |
+|---|---|---|---|---|---|
+| **LLM + prompt** | Single model call with a prompt. | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions | Low |
+| **Chain (e.g. basic RAG)** | Fixed, scripted steps (retrieve → augment → generate). | Knowledge retrieval + generation | Document search, knowledge base | Limited to retrieval | Moderate |
+| **Tool-calling agent** | LLM chooses which tool(s) to use at runtime. | Dynamic reasoning + actions | Task automation, workflows | Complexity, reliability | High |
+| **Multi-agent** | Router or coordinator orchestrates specialized sub-agents. | Decomposition, parallelism, role specialization, escalation paths. | Complex workflows and multi-domain support. Support triage across HR, IT, and Finance. | Orchestration overhead. Emergent loops. Hardest to debug and attribute. | Very High |
+
+
+### Ops Maturity Controls by Pattern
+
+| Control | LLM + prompt | Chain (basic RAG) | Tool-calling agent | Multi-agent |
+|---|---|---|---|---|
+| **Logging & tracing** | Single-step trace<br>Prompt I/O, tokens, latency | Stage traces<br>Query, top-k, scores; versions | Step spans<br>Tool I/O, errors, retries/timeouts | Cross-agent root trace<br>Routing, handoffs, shared-state |
+| **Evaluation gates** | Small golden set<br>Correctness, tone, safety | RAG metrics<br>Groundedness, P/R, citations | Task success + side-effects<br>Rollback safety | Per-role + E2E<br>Routes, resolution, escalations, loops |
+| **Governance & policy** | Change review<br>Model/prompt registry | Source policy & approvals<br>Index change control | RBAC + high-risk approvals<br>Change mgmt | Cross-role policies<br>Orchestrator gates. Audit trails |
+| **Deploy & rollback** | Optional canary<br>Quick rollback | Canary on index/prompt change<br>Rollback to last good | Canary routes + trace replay<br>Staged promotion | Orchestrator-level gates<br>Per-agent versioning |
+| **Monitoring & alerts** | Drift basics<br>Rate-limit spikes | Recall & latency drift<br>Index freshness, rate limits | Tool failures/timeouts<br>Quota & rate-limit alerts | Escalation & loop rates<br>Cost/latency by role. Rate-limit hot spots |
 
 ### From MLOps to LLMOps to AgentOps
 
@@ -56,18 +68,21 @@ timeline
 ## Key Differences Between Each Paradigm
 
 ### MLOps Focus
+- Ship predictive models reliably
 - Structured data pipelines
 - Model accuracy metrics
 - Batch prediction workflows
 - Statistical model validation
 
-### LLMOps Focus  
+### LLMOps Focus
+- Ship LLM solutions grounded in data  
 - Prompt optimization
 - Context window management
 - Inference cost optimization
 - Safety and alignment
 
 ### AgentOps Focus
+- Operate safely tool-using single- and multi-agent systems
 - **Multi-step reasoning** chains
 - **Tool integration** and API management
 - **Autonomous decision** making
@@ -75,7 +90,7 @@ timeline
 
 ## Definition of Agent Ops
 
-> **Agent Ops** is the practice of deploying, monitoring, and maintaining autonomous AI systems that can reason, plan, and take actions to achieve complex goals.
+> **Agent Ops** is the practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions to achieve complex goals.
 
 Core principles include:
 
@@ -120,6 +135,73 @@ graph LR
     
     style R,A,W fill:#c8e6c9
 ```
+
+### ReAct Loop for Single-Tool Tasks
+
+❌ **Bad**: Using a Reason→Act loop when one deterministic call would do
+
+```text
+LLM: "Thinking..."
+→ Tool: getOrderStatus(order_id)
+← LLM: "Thinking more..."
+→ Tool: getOrderStatus(order_id) (again)
+```
+
+✅ **Good**: Direct, parameterized function
+
+```python
+status = get_order_status(order_id)  
+return format_status(status)
+```
+
+### Overcomplicated Tools
+
+❌ **Bad**: e.g., Text-to-SQL when you always need the same query with a single filter field.
+
+✅ **Good**: Parameterized or stored query with allowlisted inputs
+
+### Overcomplicated Retrieval
+
+❌ **Bad**: Vector search/similarity for a simple typo-tolerant lookup
+
+✅ **Good**: Prefer lightweight fuzzy/FTS options where sufficient
+
+- `LIKE` / `ILIKE` contains searches
+- Trigram indexes
+- Levenshtein distance
+- Native full-text search
+
+### Unoptimized Retrieval
+
+❌ **Bad**: Single dense index, oversized chunks, no filters or reranking
+
+✅ **Good**:
+
+- Apply metadata filters
+- Right-size chunks and overlap
+- Consider hybrid search 
+- Add reranking
+- Evaluate recall/precision and citation coverage regularly
+
+### Ungoverned Tools
+
+❌ **Bad**: Agents can call any endpoint or run arbitrary code with broad credentials
+
+✅ **Good**:
+
+- Tool registry with explicit schemas and allowlists
+- Per-tool permissions, timeouts, and rate limits
+- Audit logs and PII redaction for inputs/outputs
+
+### No Rollback / Versioning
+
+❌ **Bad**: Shipping unlogged agents you can’t reproduce
+
+✅ **Good**:
+
+- Version prompts, tools, and routing rules; maintain an agent registry
+- Promote via dev -> staging -> prod with canary/shadow options
+- Keep a rollback path when metrics regress
 
 ### No Systematic Evaluation
 

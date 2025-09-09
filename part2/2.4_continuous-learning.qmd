@@ -1,0 +1,65 @@
+# Principle 3 The technical practices of learning
+
+Generative AI is a field that is rapidly changing. What was hard to accomplish yesterday might become easy tomorrow. For instance, as of 2025, post-training methods have greatly improved a model's ability to handle instructions and tool use, which has enabled agentic applications that were not feasible a year ago. This constant change makes it imperative that both business and technical stakeholders continuously update their mental models of what products are possible for them to build. 
+
+To accomplish this, organizations can enable institution-wide continual learning by encoding hard-won knowledge into reusable assets such as: 
+
+- standardised frameworks
+- reusable reference architectures 
+- communities of practice for both business and technical teams
+
+## Context
+
+- An organisation does not want to build only one successful generative AI application. Ideally, they are able to repeatedly produce high quality applications that can accelerate business outcomes, and to do this across multiple departments.
+- We've talked to large organisations who estimate up to hundreds of potential use cases 
+- These customers typically come to us and ask not only how to ensure the quality of a single POC or MVP, but how to build reliable best practices that allow an organisation to scale how the organisation applies generative AI to improve business practices. 
+- Scaling generative AI best practices across an organisation can be achieved in a few ways:
+    - institutionalizing technical best practices through standardised frameworks, reference architectures and best practices documentation
+    - investing in continuously refining how business and technical stakeholders work together to uncover how to use generative AI to accomplish their goals
+
+## Standardised frameworks
+Standarised frameworks allow us to achieve consistent, reliable, and efficient delivery at scale. An efficient framework aims to make software development and deployment feel like a well-oiled assembly line rather than a series of one-off custom projects, ultimately enabling faster time-to-market with higher quality and lower risk.
+
+An example of a standardised framework that can be used for generative AI applications is Databricks Asset Bundles (DAB)
+
+A Databricks Asset Bundle is a deployment unit that packages together all the related resources needed for a complete data/ML workflow or application.
+Specifically, it's a:
+- Resource Collection: Contains notebooks, jobs, pipelines, models, libraries, and configuration files that work together as a cohesive unit.
+- Infrastructure-as-Code Package: YAML configuration files specify not just the code paths, but also the compute resources, permissions, schedules, and environment settings needed to run an application.
+- Deployment Artifact: Can be versioned, promoted across environments (dev → staging → prod), and deployed atomically as a single unit.
+- Dependency Container: Handles all the interconnections between different Databricks resources - how jobs trigger each other, which notebooks depend on which libraries, etc.
+
+### Development lifecycle using Databricks Asset Bundles:
+1. Create a skeleton project folder structure by initializing a default bundle template or a custom bundle template
+2. Update the bundle configuration files by specifying settings such as workspace details, artifact names, file locations, job details, and pipeline details. These details can be customised according to different development, staging, and production deployment targets
+3. Add source code to relevant folders in the project folders
+4. Verify that definitions in the bundle configuration files are valid by running the Databricks CLI tool `databricks bundle validate`
+5. Deploy the jobs, agents, vector databases, and other artefacts that make up the generative AI application by running `databricks bundle run` 
+
+### Benefits of standardised frameworks
+A framework like Databricks Asset Bundles provides a templatized end-to-end definition of a deployable project. This approach provides several benefits: 
+- The templatized structure enabled standardisation across development teams rather than each team developed their own standards. 
+- Because project and resource definitions are captured as YAML files, they can be managed by version control systems
+- Projects can be deployed using external CI/CD tools such as Github Actions and Azure DevOps
+
+## Reference architectures
+
+(customer story?)
+
+Reference architectures provide teams with a proven blueprints containing established design patterns and best practices for building agentic applications. For example, a regulated industry might establish that all requests and responses need to pass through a guardrail step that filters messages for PII information. 
+
+Creates shared understanding across teams about how systems should be built and why.
+
+Provides 70-80% of the architectural decisions upfront, leaving teams to focus on the 20-30% that's specific to their unique requirements.
+
+## Technical best practices
+
+## Business stakeholder education
+
+Generative AI is not only a paradigm shift for how developers build applications, but how business users interact and use applications as well. 
+
+First MVPs are hard because both developers and business users go through a journey learning about what is and is not possible. 
+
+For developers, they have to fill in their knowledge gaps. Software engineers might be new to the idea of data analysis and developing LLM judges. Machine Learning practitioners can be surprised by the amount of ETL and UI code they have to produce. Business users also may start with high expectations that may have to be calibrated 
+
+Example 

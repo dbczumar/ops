@@ -20,7 +20,7 @@ To accomplish this, organizations can enable institution-wide continual learning
 ## Standardised frameworks
 Standarised frameworks allow us to achieve consistent, reliable, and efficient delivery at scale. An efficient framework aims to make software development and deployment feel like a well-oiled assembly line rather than a series of one-off custom projects, ultimately enabling faster time-to-market with higher quality and lower risk.
 
-An example of a standardised framework that can be used for generative AI applications is Databricks Asset Bundles (DAB)
+An example of a standardised framework that can be used for generative AI applications is [Databricks Asset Bundles (DAB)](https://github.com/databricks/mlops-stacks)
 
 A Databricks Asset Bundle is a deployment unit that packages together all the related resources needed for a complete data/ML workflow or application.
 Specifically, it's a:

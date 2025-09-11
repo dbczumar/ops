@@ -116,6 +116,7 @@ Core principles include:
 
 While prompt engineering and model selection are important, the ability to integrate and leverage proprietary, domain-specific data is what transforms agents from interesting demos into production-grade systems that deliver real business value. Without access to an organization's unique data and context, even the most sophisticated agents remain generic tools that struggle to address specific problems and use cases.
 
+Organizations that successfully integrate proprietary data into their agent systems gain differentiated capabilities that understand specific domains better than any generic solution, operational efficiency through reduced need for human intervention in routine tasks, continuous improvement by learning from unique data patterns and use cases, and a strategic moat where proprietary data becomes a defensible competitive advantage.
 
 ### Why Generic LLMs Aren't Enough
 
@@ -161,17 +162,6 @@ Integrating proprietary data introduces significant operational complexity:
 | **Quality assurance** | Must validate, clean, and version data sources |
 | **Retrieval performance** | Quickly finding relevant documents from large corpuses in real time |
 | **Compliance** | Ensuring data usage adheres to regulations (GDPR, HIPAA, etc.) |
-
-### The Competitive Advantage
-
-Organizations that successfully integrate proprietary data into their agent systems gain:
-
-1. **Differentiated capabilities**: Agents that understand specific domains better than any generic solution
-2. **Operational efficiency**: Reduced need for human intervention in routine tasks
-3. **Continuous improvement**: Learning from unique data patterns and use cases
-4. **Strategic moat**: Proprietary data becomes a defensible competitive advantage
-
-Leveraging proprietary data transforms agents from interesting technology demonstrations into essential business infrastructure. As we'll explore in subsequent chapters, the operational practices around data integration—from ingestion pipelines to governance frameworks—become as critical as the agent architecture itself.
 
 ## Agent Ops Anti-patterns
 

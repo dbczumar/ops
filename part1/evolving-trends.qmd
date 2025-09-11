@@ -57,37 +57,25 @@ Before examining how agents differ from other AI systems, it's important to unde
 
 As AI systems have evolved from predictive models to autonomous agents that take real-world actions, the operational practices—the tools, processes, and frameworks teams use to deploy and maintain these systems—have had to evolve too. Each generation has brought challenges that existing practices couldn't handle.
 
-### The Evolution of AI Operations
+### The Evolution of AI Ops
 
 **MLOps (2010s)**: The set of processes and automation for managing data, code, and models to improve performance stability and long-term efficiency in ML systems. MLOps emerged as teams needed to move beyond experimental model training in notebooks to production-grade systems. It encompasses the entire ML lifecycle: data pipelines for feature engineering, model training and versioning, deployment infrastructure, monitoring for drift and performance degradation, and workflow orchestration to tie it all together. This requires unified governance for both data and models, scalable training infrastructure, CI/CD pipelines for model deployment, low latency model serving endpoints, and continuous monitoring to ensure models perform reliably over time.
 
 **LLMOps (2020s)**: The practices and infrastructure required to tune, deploy, and manage large language models at scale. When models grew to billions of parameters, many teams faced new scale challenges: hosting models too large for single GPUs, managing distributed training across clusters, and controlling inference costs that could spiral out of control. LLMOps encompasses model optimization techniques like quantization and distillation, efficient tuning approaches using LoRA and QLoRA, prompt versioning and management, and safety measures to prevent harmful or biased outputs. Databricks provides managed infrastructure for tuning foundation models, optimized serving endpoints that handle batching and caching, cost controls to prevent budget overruns, and guardrails to ensure outputs meet safety and compliance standards.
 
-**AgentOps (2024+)**: The practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions. Unlike LLMs that operate in single request-response cycles, agents execute multi-step workflows using tools to interact with real systems—querying databases, calling APIs, modifying files, and executing code. This shift from single-step inference to active tool use introduced entirely new operational challenges: establishing permission boundaries for tools, tracing complex multi-step reasoning chains, preventing cascading failures when agents make mistakes, handling retry logic and error recovery, and orchestrating multiple agents without conflicts or infinite loops. Databricks addresses these challenges through Agent Bricks, a managed platform that automatically builds, optimizes, and deploys AI agents—handling model selection, fine-tuning with proprietary data, evaluation, monitoring, and continuous optimization behind the scenes. For teams that need more control, Databricks also provides capabilities for DIY, code-first agent development: evaluation frameworks to test agent behavior before deployment, comprehensive tracing for debugging multi-step decisions, secure tool execution with permission controls, monitoring for cost and performance, and serving infrastructure that scales to zero when idle.
+**AgentOps (2024+)**: The practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions. Unlike LLMs that operate in single request-response cycles, agents execute multi-step workflows using tools to interact with real systems—querying databases, calling APIs, modifying files, and executing code. This shift from single-step inference to active tool use introduced entirely new operational challenges: establishing permission boundaries for tools, tracing complex multi-step reasoning chains, preventing cascading failures when agents make mistakes, handling retry logic and error recovery, and orchestrating multiple agents without conflicts or infinite loops.
 
-### Why AgentOps Is Necessary
+Databricks addresses these challenges through Agent Bricks, a managed platform that automatically builds, optimizes, and deploys AI agents—handling model selection, fine-tuning with proprietary data, evaluation, monitoring, and continuous optimization behind the scenes. Databricks also provides capabilities for DIY, code-first agent development: evaluation frameworks to test agent behavior before deployment, comprehensive tracing for debugging multi-step decisions, secure tool execution with permission controls, monitoring for cost and performance, and serving infrastructure that scales to zero when idle.
 
-The jump from LLMs to agents introduced risks and complexities that existing practices couldn't handle:
+### Core AgentOps Challenges
 
-**Agents can cause real damage**. When an LLM hallucinates, you get wrong text. When an agent hallucinates, it might delete production data or send emails to your entire customer base. The stakes are fundamentally different.
+Building on lessons from MLOps and LLMOps, AgentOps must address five key operational challenges:
 
-**Failures cascade in complex ways**. A simple prompt error can trigger a chain reaction: the agent misinterprets the task, calls the wrong API, gets unexpected data back, makes a bad decision based on that data, and continues down an increasingly wrong path. Traditional monitoring can't track these multi-step failure modes.
-
-**Debugging requires specialized tooling**. When an agent fails after 15 steps across 5 different tools, you need to understand not just what happened, but why the agent made each decision. Standard logs and metrics don't capture the reasoning chains and decision points.
-
-**Multiple agents create coordination challenges**. When you have several agents working together, you face new problems: agents getting stuck in loops, conflicting actions, resource contention, and emergent behaviors that no single agent exhibits alone.
-
-**Safety boundaries must be enforced at runtime**. You can't just filter an agent's final output—you need to prevent it from taking dangerous actions in the first place. This requires real-time governance and permission systems that traditional ML pipelines never needed.
-
-### Core AgentOps Principles
-
-Building on lessons from MLOps and LLMOps, AgentOps establishes five core principles:
-
-1. **Reliability**: Agents must perform consistently across diverse inputs and edge cases
-2. **Observability**: Every decision point and tool call must be traceable and explainable  
-3. **Safety**: Hard boundaries prevent agents from taking harmful or unintended actions
-4. **Scalability**: Systems must support multiple concurrent agents without resource conflicts
-5. **Maintainability**: Agent behaviors must be updatable without breaking existing workflows
+1. **Reliability**: Ensuring agents perform consistently across diverse inputs and edge cases
+2. **Observability**: Making every decision point and tool call traceable and explainable  
+3. **Safety**: Establishing boundaries to prevent harmful or unintended actions
+4. **Scalability**: Supporting multiple concurrent agents without resource conflicts
+5. **Maintainability**: Updating agent behaviors without breaking existing workflows
 
 ## Leveraging Proprietary Data
 

@@ -35,8 +35,6 @@ Before examining how agents differ from other AI systems, it's important to unde
 
 **Multi-agent Systems**: These architectures employ multiple specialized agents working together to solve complex problems. Agents might collaborate through various patterns—hierarchical coordination where a supervisor delegates to specialists, peer-to-peer communication where agents directly interact, or competitive approaches where multiple agents propose solutions. Each agent typically specializes in specific tasks or domains.
 
-### Architecture Comparison Matrix
-
 | Pattern | What it is | Capabilities | Use Cases | Limitations | Ops Complexity |
 |---|---|---|---|---|---|
 | **LLM + prompt** | Single model call with a prompt. | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions | Low |

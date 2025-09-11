@@ -131,7 +131,7 @@ Public, general-purpose LLMs excel at high level reasoning and broad knowledge t
 
 Two fundamental approaches exist for integrating proprietary data into agent systems: retrieval, which accesses external data at runtime through tools, and fine-tuning, which embeds knowledge directly into model weights.
 
-#### 1. Retrieval
+#### Retrieval
 
 Retrieval enables agents to access external data during inference, keeping responses current without model retraining. The simplest retrieval pattern is RAG (Retrieval-Augmented Generation), which follows a fixed sequence: query the data source, retrieve relevant information, augment the prompt with this context, and generate a response. More sophisticated agent architectures use dynamic retrieval, where the agent reasons about which data sources to query, what information to retrieve, and how to combine results from multiple sources.
 
@@ -147,7 +147,7 @@ Retrieval enables agents to access external data during inference, keeping respo
 
 **Files and Objects**: Direct access to documents, images, PDFs, and other unstructured data stored in object storage (S3, Azure Blob), Volumes in Databricks Unity Catalog, file systems, or content management systems. Agents can parse these files on-demand to extract specific information.
 
-#### 2. Fine-tuning and Adaptation
+#### Fine-tuning and Adaptation
 
 Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Platforms like Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning LLMs on proprietary data.
 

@@ -53,62 +53,41 @@ Before examining how agents differ from other AI systems, it's important to unde
 | **Deploy & rollback** | Optional canary<br>Quick rollback | Canary on index/prompt change<br>Rollback to last good | Canary routes + trace replay<br>Staged promotion | Orchestrator-level gates<br>Per-agent versioning |
 | **Monitoring & alerts** | Drift basics<br>Rate-limit spikes | Recall & latency drift<br>Index freshness, rate limits | Tool failures/timeouts<br>Quota & rate-limit alerts | Escalation & loop rates<br>Cost/latency by role. Rate-limit hot spots |
 
-### From MLOps to LLMOps to AgentOps
+## From MLOps to AgentOps
 
-```{mermaid}
-timeline
-    title Evolution of AI Operations
-    
-    2010s : MLOps
-           : Model training pipelines
-           : A/B testing
-           : Model monitoring
-           
-    2020s : LLMOps  
-           : Prompt engineering
-           : Fine-tuning workflows
-           : Context management
-           
-    2024+ : AgentOps
-           : Multi-agent orchestration
-           : Tool integration
-           : Autonomous workflows
-```
+As AI systems have evolved from predictive models to autonomous agents that take real-world actions, the operational practices—the tools, processes, and frameworks teams use to deploy and maintain these systems—have had to evolve too. Each generation has brought challenges that existing practices couldn't handle.
 
-## Key Differences Between Each Paradigm
+### The Evolution of AI Operations
 
-### MLOps Focus
-- Ship predictive models reliably
-- Structured data pipelines
-- Model accuracy metrics
-- Batch prediction workflows
-- Statistical model validation
+**MLOps (2010s)**: The set of processes and automation for managing data, code, and models to improve performance stability and long-term efficiency in ML systems. MLOps emerged as teams needed to move beyond experimental model training in notebooks to production-grade systems. It encompasses the entire ML lifecycle: data pipelines for feature engineering, model training and versioning, deployment infrastructure, monitoring for drift and performance degradation, and workflow orchestration to tie it all together. This requires unified governance for both data and models, scalable training infrastructure, CI/CD pipelines for model deployment, low latency model serving endpoints, and continuous monitoring to ensure models perform reliably over time.
 
-### LLMOps Focus
-- Ship LLM solutions grounded in data  
-- Prompt optimization
-- Context window management
-- Inference cost optimization
-- Safety and alignment
+**LLMOps (2020s)**: The practices and infrastructure required to tune, deploy, and manage large language models at scale. When models grew to billions of parameters, many teams faced new scale challenges: hosting models too large for single GPUs, managing distributed training across clusters, and controlling inference costs that could spiral out of control. LLMOps encompasses model optimization techniques like quantization and distillation, efficient tuning approaches using LoRA and QLoRA, prompt versioning and management, and safety measures to prevent harmful or biased outputs. Databricks provides managed infrastructure for tuning foundation models, optimized serving endpoints that handle batching and caching, cost controls to prevent budget overruns, and guardrails to ensure outputs meet safety and compliance standards.
 
-### AgentOps Focus
-- Operate safely tool-using single- and multi-agent systems
-- **Multi-step reasoning** chains
-- **Tool integration** and API management
-- **Autonomous decision** making
-- **Human-in-the-loop** workflows
+**AgentOps (2024+)**: The practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions. Unlike LLMs that operate in single request-response cycles, agents execute multi-step workflows using tools to interact with real systems—querying databases, calling APIs, modifying files, and executing code. This shift from single-step inference to active tool use introduced entirely new operational challenges: establishing permission boundaries for tools, tracing complex multi-step reasoning chains, preventing cascading failures when agents make mistakes, handling retry logic and error recovery, and orchestrating multiple agents without conflicts or infinite loops. Databricks addresses these challenges through Agent Bricks, a managed platform that automatically builds, optimizes, and deploys AI agents—handling model selection, fine-tuning with proprietary data, evaluation, and continuous optimization behind the scenes. For teams that need more control, Databricks also provides capabilities for DIY, code-first agent development: evaluation frameworks to test agent behavior before deployment, comprehensive tracing for debugging multi-step decisions, secure tool execution with permission controls, monitoring for cost and performance, and serving infrastructure that scales to zero when idle.
 
-## Definition of Agent Ops
+### Why AgentOps Is Necessary
 
-> **Agent Ops** is the practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions to achieve complex goals.
+The jump from LLMs to agents introduced risks and complexities that existing practices couldn't handle:
 
-Core principles include:
+**Agents can cause real damage**. When an LLM hallucinates, you get wrong text. When an agent hallucinates, it might delete production data or send emails to your entire customer base. The stakes are fundamentally different.
 
-1. **Reliability**: Agents must perform consistently
-2. **Observability**: Understanding agent decision-making  
-3. **Safety**: Preventing harmful or unintended actions
-4. **Scalability**: Supporting multiple concurrent agents
-5. **Maintainability**: Evolving agent capabilities over time
+**Failures cascade in complex ways**. A simple prompt error can trigger a chain reaction: the agent misinterprets the task, calls the wrong API, gets unexpected data back, makes a bad decision based on that data, and continues down an increasingly wrong path. Traditional monitoring can't track these multi-step failure modes.
+
+**Debugging requires specialized tooling**. When an agent fails after 15 steps across 5 different tools, you need to understand not just what happened, but why the agent made each decision. Standard logs and metrics don't capture the reasoning chains and decision points.
+
+**Multiple agents create coordination challenges**. When you have several agents working together, you face new problems: agents getting stuck in loops, conflicting actions, resource contention, and emergent behaviors that no single agent exhibits alone.
+
+**Safety boundaries must be enforced at runtime**. You can't just filter an agent's final output—you need to prevent it from taking dangerous actions in the first place. This requires real-time governance and permission systems that traditional ML pipelines never needed.
+
+### Core AgentOps Principles
+
+Building on lessons from MLOps and LLMOps, AgentOps establishes five core principles:
+
+1. **Reliability**: Agents must perform consistently across diverse inputs and edge cases
+2. **Observability**: Every decision point and tool call must be traceable and explainable  
+3. **Safety**: Hard boundaries prevent agents from taking harmful or unintended actions
+4. **Scalability**: Systems must support multiple concurrent agents without resource conflicts
+5. **Maintainability**: Agent behaviors must be updatable without breaking existing workflows
 
 ## Leveraging Proprietary Data
 
@@ -147,7 +126,7 @@ Retrieval enables agents to access external data during inference, keeping respo
 
 #### Fine-tuning and Adaptation
 
-Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Platforms like Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning LLMs on proprietary data.
+Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning LLMs on proprietary data.
 
 ### Data Integration as a Core AgentOps Concern
 

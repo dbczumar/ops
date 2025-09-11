@@ -35,12 +35,12 @@ Before examining how agents differ from other AI systems, it's important to unde
 
 **Multi-agent Systems**: These architectures employ multiple specialized agents working together to solve complex problems. Agents might collaborate through various patterns—hierarchical coordination where a supervisor delegates to specialists, peer-to-peer communication where agents directly interact, or competitive approaches where multiple agents propose solutions. Each agent typically specializes in specific tasks or domains.
 
-| Pattern | What it is | Capabilities | Use Cases | Limitations | Ops Complexity |
-|---|---|---|---|---|---|
-| **LLM + prompt** | Single model call with a prompt. | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions | Low |
-| **Chain (e.g. basic RAG)** | Fixed, scripted steps (retrieve → augment → generate). | Knowledge retrieval + generation | Document search, knowledge base | Limited to retrieval | Moderate |
-| **Tool-calling agent** | LLM chooses which tool(s) to use at runtime. | Dynamic reasoning + actions | Task automation, workflows | Complexity, reliability | High |
-| **Multi-agent** | Router or coordinator orchestrates specialized sub-agents. | Decomposition, parallelism, role specialization, escalation paths. | Complex workflows and multi-domain support. Support triage across HR, IT, and Finance. | Orchestration overhead. Emergent loops. Hardest to debug and attribute. | Very High |
+| Pattern | What it is | Capabilities | Use Cases | Limitations |
+|---|---|---|---|---|
+| **LLM + prompt** | Single model call with a prompt. | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions |
+| **Chain (e.g. basic RAG)** | Fixed, scripted steps (retrieve → augment → generate). | Knowledge retrieval + generation | Document search, knowledge base | Limited to retrieval |
+| **Tool-calling agent** | LLM chooses which tool(s) to use at runtime. | Dynamic reasoning + actions | Task automation, workflows | Complexity, reliability |
+| **Multi-agent** | Router or coordinator orchestrates specialized sub-agents. | Decomposition, parallelism, role specialization, escalation paths. | Complex workflows and multi-domain support. Support triage across HR, IT, and Finance. | Orchestration overhead. Emergent loops. Hardest to debug and attribute. |
 
 
 ### Ops Maturity Controls by Pattern

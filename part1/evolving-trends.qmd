@@ -128,19 +128,19 @@ Foundation models excel at general reasoning and broad knowledge tasks, but ente
 
 ### Common Data Integration Patterns
 
-Organizations typically employ several approaches to connect agents with their proprietary data. Each pattern addresses different aspects of the data integration challenge, and production systems often combine multiple approaches.
+Agents typically access data through tools—whether retrieving documents from vector databases, querying SQL tables, or calling APIs. Each pattern differs in how data is stored, indexed, and retrieved. The following patterns represent the main approaches for integrating proprietary data into agent systems.
 
 #### 1. RAG (Retrieval-Augmented Generation)
 RAG addresses the challenge of keeping agent knowledge current and comprehensive without constant retraining. RAG systems retrieve relevant documents from vector databases using semantic search, then include this context in the prompt sent to the language model. Many implementations combine traditional keyword search with embedding-based retrieval to improve recall. Metadata filtering allows queries to be constrained by attributes like date ranges, document types, or access levels.
 
-#### 2. Fine-tuning and Adaptation
-Fine-tuning solves the problem of agents needing deep, consistent understanding of domain-specific terminology and conventions that would be inefficient to include in every prompt. Organizations can fine-tune base models on their domain-specific data to encode specialized knowledge directly into the model weights. Techniques like LoRA (Low-Rank Adaptation) and QLoRA, often applied to open-source models, reduce the computational cost of fine-tuning by training only a small number of additional parameters. Some systems implement continuous learning pipelines that periodically retrain on new interactions and feedback.
+#### 2. Database and API Access
+Database and API access patterns address the need for real-time data and transactional operations that require guaranteed freshness and consistency. Instead of pre-indexing data into vector stores, agents query live systems directly through specialized tools. This includes executing SQL queries against operational databases, calling internal APIs for real-time data, and parsing structured documents on demand. While this approach ensures data freshness, it requires careful management of query permissions, rate limits, and response times.
 
-#### 3. Tool Calling for Data Access
-Tool calling addresses the need for real-time data and transactional operations that require guaranteed freshness and consistency. Instead of storing all data in vector databases, agents can query live systems directly through data-retrieval tools. This includes executing SQL queries against operational databases, calling internal APIs for real-time data, and parsing structured documents on demand. This approach ensures data freshness but requires careful management of query permissions and rate limits.
-
-#### 4. Knowledge Graphs
+#### 3. Knowledge Graphs
 Knowledge graphs solve the challenge of representing and reasoning about complex relationships between entities that would be difficult to capture in flat documents. Knowledge graphs represent information as networks of entities and their relationships, enabling agents to traverse connections and reason about complex dependencies. Graph databases support queries that would be inefficient in traditional databases, such as finding all entities within N degrees of separation. The structured nature of knowledge graphs also facilitates fact verification and consistency checking across different data sources.
+
+#### 4. Fine-tuning and Adaptation
+Fine-tuning solves the problem of agents needing deep, consistent understanding of domain-specific terminology and conventions that would be inefficient to include in every prompt or retrieve through tools. Organizations can fine-tune base models on their domain-specific data to encode specialized knowledge directly into the model weights. Techniques like LoRA (Low-Rank Adaptation) and QLoRA, often applied to open-source models, reduce the computational cost of fine-tuning by training only a small number of additional parameters. Some systems implement continuous learning pipelines that periodically retrain on new interactions and feedback.
 
 ### Data Integration as a Core AgentOps Concern
 

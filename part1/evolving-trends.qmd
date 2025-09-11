@@ -117,9 +117,9 @@ Core principles include:
 While prompt engineering and model selection are important, the ability to integrate and leverage proprietary, domain-specific data is what transforms agents from interesting demos into production-grade systems that deliver real business value. Without access to an organization's unique data and context, even the most sophisticated agents remain generic tools that struggle to address specific problems and use cases.
 
 
-### Why Generic Foundation Models Aren't Enough
+### Why Generic LLMs Aren't Enough
 
-Foundation models excel at general reasoning and broad knowledge tasks, but enterprise agent deployments require:
+Public, general-purpose LLMs excel at high level reasoning and broad knowledge tasks, but enterprise agent deployments require:
 
 - **Domain expertise**: Industry-specific terminology, best practices, and regulations
 - **Organizational context**: Internal processes, policies, and historical decisions
@@ -148,7 +148,7 @@ Retrieval enables agents to access external data during inference, keeping respo
 
 #### 2. Fine-tuning and Adaptation
 
-Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Platforms like Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning foundation models on proprietary data.
+Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Platforms like Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning LLMs on proprietary data.
 
 ### Data Integration as a Core AgentOps Concern
 

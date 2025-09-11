@@ -116,7 +116,7 @@ Retrieval enables agents to access external data during inference, keeping respo
 
 Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning LLMs on proprietary data.
 
-### Data Integration as a Core AgentOps Concern
+### Operational Complexity of Data Integration
 
 Integrating proprietary data introduces significant operational complexity:
 

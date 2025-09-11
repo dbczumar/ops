@@ -1,6 +1,6 @@
 # The Big Book of Agent Ops
 
-A comprehensive, community-driven guide to deploying quality agentic applications safely and reliably.
+A comprehensive guide to deploying quality agentic applications safely and reliably.
 
 ## 🚀 Quick Start
 

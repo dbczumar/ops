@@ -29,7 +29,7 @@ Before examining how agents differ from other AI systems, it's important to unde
 
 **LLM with Prompt Engineering**: At its simplest, this involves sending a carefully crafted prompt to a language model and receiving a text response. Prompt engineering is the practice of designing and refining these prompts to elicit better responses—adjusting wording, providing examples, specifying output formats, and setting context. The model relies entirely on its training data and the information provided in the prompt.
 
-**RAG (Retrieval-Augmented Generation)**: RAG systems enhance LLMs by first retrieving relevant documents from a knowledge base, then including this retrieved context in the prompt. When a user asks a question, the system searches through indexed documents, selects the most relevant passages, and provides them to the LLM along with the original query. This allows the model to answer questions about information it wasn't trained on.
+**RAG (Retrieval-Augmented Generation)**: RAG systems enhance LLMs by first retrieving relevant documents from a knowledge base, then including this retrieved context in the prompt. When a user asks a question, the system searches through indexed documents, selects the most relevant passages, and provides them to the LLM along with the original query. This allows the model to answer questions about information it wasn't trained on. RAG is often implemented using a vector database, since they excel at retrieving relevant unstructured data based on natural language queries.
 
 **Tool-calling Agents**: These systems give LLMs the ability to use external tools and APIs. Instead of just generating text, the agent can decide to call functions, query databases, execute code, or interact with other services. The agent reasons about which tools to use, in what order, and how to combine their outputs to accomplish a task.
 
@@ -128,19 +128,27 @@ Foundation models excel at general reasoning and broad knowledge tasks, but ente
 
 ### Common Data Integration Patterns
 
-Agents typically access data through tools—whether retrieving documents from vector databases, querying SQL tables, or calling APIs. Each pattern differs in how data is stored, indexed, and retrieved. The following patterns represent the main approaches for integrating proprietary data into agent systems.
+Two fundamental approaches exist for integrating proprietary data into agent systems: retrieval, which accesses external data at runtime through tools, and fine-tuning, which embeds knowledge directly into model weights.
 
-#### 1. RAG (Retrieval-Augmented Generation)
-RAG addresses the challenge of keeping agent knowledge current and comprehensive without constant retraining. RAG systems retrieve relevant documents from vector databases using semantic search, then include this context in the prompt sent to the language model. Many implementations combine traditional keyword search with embedding-based retrieval to improve recall. Metadata filtering allows queries to be constrained by attributes like date ranges, document types, or access levels.
+#### 1. Retrieval
 
-#### 2. Database and API Access
-Database and API access patterns address the need for real-time data and transactional operations that require guaranteed freshness and consistency. Instead of pre-indexing data into vector stores, agents query live systems directly through specialized tools. This includes executing SQL queries against operational databases, calling internal APIs for real-time data, and parsing structured documents on demand. While this approach ensures data freshness, it requires careful management of query permissions, rate limits, and response times.
+Retrieval enables agents to access external data during inference, keeping responses current without model retraining. The simplest retrieval pattern is RAG (Retrieval-Augmented Generation), which follows a fixed sequence: query the data source, retrieve relevant information, augment the prompt with this context, and generate a response. More sophisticated agent architectures use dynamic retrieval, where the agent reasons about which data sources to query, what information to retrieve, and how to combine results from multiple sources.
 
-#### 3. Knowledge Graphs
-Knowledge graphs solve the challenge of representing and reasoning about complex relationships between entities that would be difficult to capture in flat documents. Knowledge graphs represent information as networks of entities and their relationships, enabling agents to traverse connections and reason about complex dependencies. Graph databases support queries that would be inefficient in traditional databases, such as finding all entities within N degrees of separation. The structured nature of knowledge graphs also facilitates fact verification and consistency checking across different data sources.
+##### Data Sources for Retrieval
 
-#### 4. Fine-tuning and Adaptation
-Fine-tuning solves the problem of agents needing deep, consistent understanding of domain-specific terminology and conventions that would be inefficient to include in every prompt or retrieve through tools. Organizations can fine-tune base models on their domain-specific data to encode specialized knowledge directly into the model weights. Techniques like LoRA (Low-Rank Adaptation) and QLoRA, often applied to open-source models, reduce the computational cost of fine-tuning by training only a small number of additional parameters. Some systems implement continuous learning pipelines that periodically retrain on new interactions and feedback.
+**Vector Databases**: Store embedded documents for semantic search, enabling agents to find conceptually similar information even when exact keywords don't match. Vector databases excel at identifying relevant documents within large stores of unstructured data. Databricks Vector Search is a native vector database integrated with Delta Lake on Databricks.
+
+**Structured Data Systems**: Enable SQL and structured queries against relational databases, NoSQL stores, data warehouses, and data lake formats like Delta and Iceberg tables. Agents can query these systems through tools like Databricks SQL or Lakebase.
+
+**APIs**: Provide real-time data from internal services and external providers. Agents call these APIs to fetch current prices, check inventory levels, retrieve user information, or trigger actions in other systems. Protocols like MCP (Model Context Protocol) enable agents to discover available data APIs and call them correctly and performantly.
+
+**Knowledge Graphs**: Represent entities and their relationships, allowing agents to traverse connections and reason about complex dependencies. Graph databases enable queries that would be inefficient in traditional databases, such as finding all entities within N degrees of separation.
+
+**Files and Objects**: Direct access to documents, images, PDFs, and other unstructured data stored in object storage (S3, Azure Blob), Volumes in Databricks Unity Catalog, file systems, or content management systems. Agents can parse these files on-demand to extract specific information.
+
+#### 2. Fine-tuning and Adaptation
+
+Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Platforms like Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning foundation models on proprietary data.
 
 ### Data Integration as a Core AgentOps Concern
 

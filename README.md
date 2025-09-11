@@ -178,4 +178,3 @@ This book aims to be:
 
 ---
 
-**Ready to contribute?** Start with `./preview.sh` and begin writing! 🚀

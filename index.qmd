@@ -24,4 +24,3 @@ Each chapter builds on previous concepts while remaining modular enough to refer
 
 ---
 
-*Let's build better agent systems together.*

@@ -21,15 +21,16 @@ book:
     - part: "Part 2: Principles of Agent Ops"
       chapters:
         - part2/2.1_intro_devops-principles.qmd
+        - part2/2.2_flow-principles.qmd
         - part2/2.3_feedback-principles.qmd
         - part2/2.4_continuous-learning.qmd
     
     - part: "Part 3: People, Process and Technology"
       chapters:
         - part3/hidden-technical-debt.qmd
-        - part3/identifying-value-streams.qmd
         - part3/stakeholder-management.qmd
         - part3/roles-responsibilities.qmd
+        - part3/identifying-high-leverage-activities.qmd
 
 format:
   html:

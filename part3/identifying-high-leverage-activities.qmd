@@ -16,7 +16,11 @@ These activities can be implemented as part of a ~two week design and planning w
 
 ## Key planning activities to prioritize
 
-To grapple with this complexity, we propose the following planning framework for teams to ensure that they are addressing key value streams, in the right order, as they develop their agentic applications
+To address this complexity, we've identified a repeatable sequence of planning activities that we've found to be important for mapping out our problem space and for aligning stakeholders. Focus on these key areas at the start of a project, and the project's chances of success increase greatly. 
+
+These activities can be implemented as part of a roughly two-week design and planning workshop at the start of a project, something like a design sprint. Design sprints are time-boxed collaborative workshops that bring together cross-functional teams to rapidly prototype and validate solutions before committing significant development resources. Originally popularized by Google Ventures, design sprints compress months of traditional planning into an intensive, focused period where teams can align on design decisions, identify key data sources and plan evaluation suites before diving into the complex technical implementation.
+
+### Suggested planning sequence
 
 1. Map out in detail the current workflow as it is executed by humans
 2. Translate the business workflow mapped in step 1 into a technical architecture covering:
@@ -32,15 +36,43 @@ To make these steps more concrete, we will go through a worked example of a cust
 
 ## Worked example: Telecommunications Customer Support Agent
 
-### Business process mapping
+### 1. Business process mapping
 
-Map out business process workflow
+In our example, support agents primarily respond to inbound customer calls, emails, live chats, and support tickets regarding service disruptions, billing questions, plan changes, and technical problems . They must quickly diagnose issues ranging from simple password resets to complex network connectivity problems. The diagram below shows the broad categories of questions an agent might receive as well as some example questions. Note also that some questions might span multiple categories, and multiple categories might also be addressed within a single customer call. 
 
-[DIAGRAM TBD]
+![high level workflow breakdown](./files/high-level-workflow-breakdown.png)
 
-### Translating business process into a technical architecture
+Addressing a customer query is not always straightforward. As shown in the workflow below, when handling a question related to an unexpectedly high bill, an agent may have to iteratively work through a set of scenarios to identify a root cause. This workflow involves a combination of planning, taking action and evaluating the action's output before deciding on a next step, making it suitable to be handled by an agentic solution rather than a linear LLM workflow. 
 
-#### 1. Identify available data sources 
+![billing-specific workflow breakdown](./files/billing-query-workflow.png)
+
+### 2. Translating business process into a technical architecture
+
+From mapping out how human customer support agents manage their responsibilities, we understand that they commonly need to address queries around four broad areas: account, billing, products and technical support. 
+
+Although a single human can easily mentally classify and handle customer queries across all these areas, agents are different. We want to ensure what each agent has a defined set of responsibilities and toolset. By designing for modularity, we can better construct prompts, tools and evaluations. 
+
+Therefore, we decide on having one sub-agent per query category, with a supervisor agent being responsible for routing questions between agents. We do not expect sub-agents to communicate with each other, which simplifies our setup and reduces protential sources of indeterminism. 
+
+**Multi-agent high-level architecture**
+
+![Multi-agent example architecture](./files/telco-multi-agent-example.png)
+
+| Agent | Primary Role | Description |
+|-------|-------------|-------------|
+| **Supervisor Agent** | Workflow Orchestration | Orchestrates the workflow, routes queries to specialized agents, generates responses. Conducts query intent classification, sentiment analysis, and extracts attributes for routing decisions |
+| **Account Agent** | Customer Profile Management | Handles customer profile and subscription queries |
+| **Billing Agent** | Financial Services | Processes billing, payment, and usage-related queries |
+| **Tech Support Agent** | Technical Assistance | Provides troubleshooting and technical support |
+| **Product Agent** | Product Information | Manages queries about plans, devices, and promotions |
+
+Additionally, we should also map out the tools we can provide to the agent
+
+**Billing sub-agent setup**
+
+![Billing agent tools](./files/billing-agent-tools.png)
+
+### 3. Identify available data sources 
 
 Structured data sources
 
@@ -62,71 +94,6 @@ Unstructured data sources
 | telco_customer_support_dev.bronze.knowledge_base | Full content stored as markdown text including FAQs, policies, guides, and procedures |
 | telco_customer_support_dev.bronze.support_tickets | Free-text issue descriptions from customers |
 | telco_customer_support_dev.bronze.support_tickets | Free-text resolution details from support agents |
-
-#### Design sub-agents according to expected query patterns
-
-**1. Account & Customer Information Queries**
-
-**Description:**  
-Queries related to customer profile information, account status, subscription details
-
-**Data Sources:**
-
-- Customers 
-- Subscriptions
-- Plans
-
-**Example Queries:**
-
-- "What plan am I currently on?"
-- "When did I create my account?"
-- "Is my autopay enabled?"
-- "How many lines do I have on my account?"
-
-**Response Requirements:**  
-
-Should include relevant account details while maintaining privacy safeguards. May require customer verification before providing sensitive information.
-
-**2. Billing & Payment Queries**
-
-**Description:**  
-Questions about invoices, payments, charges, billing cycles
-
-**Data Sources:**  
-
-- Invoices
-- Payments
-- Usage
-- Subscriptions
-
-**Example Queries:**
-
-- "Why is my bill higher this month?"
-- "When is my payment due?"
-- "I see a charge for $14.99 that I don't recognize. What is that?"
-- "How much data did I use last month?"
-- "Did my last payment go through?"
-
-**Response Requirements:**  
-Should provide detailed breakdowns of charges, explain billing terms, offer solutions for payment issues. [P1] May require calculations to explain changes between billing cycles.
-
-#### Initial multi-agent architecture
-
-From mapping out how human customer support agents manage their responsibilities, we understand that they commonly need to address queries around four broad areas: account, billing, products and technical support. 
-
-Although a single human can easily mentally classify and handle customer queries across all these areas, agents are different. We want to ensure what each agent has a defined set of responsibilities and toolset. By designing for modularity, we can better construct prompts, tools and evaluations. 
-
-Therefore, we decide on having one sub-agent per query category, with a supervisor agent being responsible for routing questions between agents. We do not expect sub-agents to communicate with each other, which simplifies our setup and reduces protential sources of indeterminism. 
-
-![Multi-agent example architecture](./files/telco-multi-agent-example.png)
-
-| Agent | Primary Role | Description |
-|-------|-------------|-------------|
-| **Supervisor Agent** | Workflow Orchestration | Orchestrates the workflow, routes queries to specialized agents, generates responses. Conducts query intent classification, sentiment analysis, and extracts attributes for routing decisions |
-| **Account Agent** | Customer Profile Management | Handles customer profile and subscription queries |
-| **Billing Agent** | Financial Services | Processes billing, payment, and usage-related queries |
-| **Tech Support Agent** | Technical Assistance | Provides troubleshooting and technical support |
-| **Product Agent** | Product Information | Manages queries about plans, devices, and promotions |
 
 
 ### Instrumentating observability based on personas
@@ -173,6 +140,10 @@ At the same time, certain failure modes only become evident after a bottoms-up a
 
 Here, we outline some potential ways to get started with both top-down and bottom-up evaluation suite design in order to setup a project for success. 
 
+**Top-down approach** 
+
+Generate various customer personas and scenarios, have an LLM create sample queries 
+
 ```
     "billing": {
         "contexts": [
@@ -211,16 +182,22 @@ Here, we outline some potential ways to get started with both top-down and botto
         ]
     },
 ```    
-### Align LLM judge outputs with SME feedback
+**Bottoms-up approach**
 
-Conduct workshop 
+Conduct error analysis based on sample traces, then align LLM judge outputs with SME feedback to create automated tests
 
-Most judge builders on the market need to assume that teams a) know what to judge and b) how to collect quality data. While this is true for many customers, there are also many for whom it is not. This workshop additionally provides:
-Guided error analysis to identify what judges are high value
-Proven methodology for collecting high-quality data
-Tools for annotation, IRR computation, and disagreement resolution
-Compatibility with MLFlow traces
-This gives teams Surge/Scale/SuperAnnotate-style capabilities in-house, with their SMEs, for a fraction of the time and cost. They can then take these gold labels to our Judge Builder Product for auto-optimization.
+This exercise is best down in a workshop format with SMEs, developers and other stakeholders This is
+
+TODO: Align with Pallavi and Jonathan to include this section here based on workshops they did with customers
+
+Most judge builders on the market need to assume that teams a) know what to judge and b) how to collect quality data. While this is true for many customers, there are also many for whom it is not. 
+
+This workshop additionally provides:
+- Guided error analysis to identify what judges are high value
+- Proven methodology for collecting high-quality data
+- Tools for annotation, IRR computation, and disagreement resolution
+- Compatibility with MLFlow traces
+- This gives teams Surge/Scale/SuperAnnotate-style capabilities in-house, with their SMEs, for a fraction of the time and cost. They can then take these gold labels to our Judge Builder Product for auto-optimization.
 
 ##### Workshop outline 
 
@@ -237,7 +214,9 @@ Base classes for evaluation scorers
 
 - do the same thing with evaluation scorers 
 
-Can also consider doing the same for various tracing EDA tools
+Can also consider doing the same for various tracing EDA tools eg. summary report that can be used as a template and customised by different use case teams 
+
+TODO: include example from custom mlflow review repository
 
 ```
 class BaseAgent(ResponsesAgent, abc.ABC):

@@ -27,10 +27,10 @@ book:
     
     - part: "Part 3: People, Process and Technology"
       chapters:
+        - part3/identifying-high-leverage-activities.qmd
+        - part3/roles-responsibilities.qmd
         - part3/hidden-technical-debt.qmd
         - part3/stakeholder-management.qmd
-        - part3/roles-responsibilities.qmd
-        - part3/identifying-high-leverage-activities.qmd
 
 format:
   html:

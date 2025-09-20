@@ -145,7 +145,7 @@ Primary Responsibilities:
 
 An AI Safety Engineer acts as the security specialist for AI systems, implementing technical safeguards against adversarial attacks, harmful outputs, and system failures that traditional security approaches don't address. 
 
-In smaller organisations, these responsibilities are often distributed across AI engineers (who handle basic safety measures), security engineers (who manage traditional security concerns), or platform engineers (who oversee monitoring). However, the unique risks posed by AI—such as prompt injection, model manipulation, and hallucinations—are driving the need for specialised expertise. This trend is reinforced by the fact that leading AI labs like OpenAI, Anthropic, and DeepMind have dedicated AI safety teams, and both the UK and US governments established AI Safety Institutes in 2024 to tackle these emerging challenges.
+In smaller organisations, these responsibilities are often distributed across AI engineers (who handle basic safety measures), security engineers (who manage traditional security concerns), or platform engineers (who oversee monitoring). However, the unique risks posed by AI, such as prompt injection, model manipulation, and hallucinations, are driving the need for specialised expertise. This trend is reinforced by the fact that leading AI labs like OpenAI, Anthropic, and DeepMind have dedicated AI safety teams, and both the [UK](https://www.gov.uk/government/publications/ai-safety-institute-overview/introducing-the-ai-safety-institute) and [US](https://www.nist.gov/caisi) governments established AI Safety Institutes to tackle these emerging challenges.
 
 Primary Responsibilities:
 
@@ -195,7 +195,7 @@ Effective GenAI projects depend on strong cross-functional collaboration, with r
 
 | Role                | Interacts With            | Example Purpose of Interaction                              |
 |---------------------|---------------------------|-----------------------------------------------------|
-| **AI Engineer**     | Data Engineer             | Define vector DB & embedding requirements for RAG   |
+| **AI Engineer**     | Data Engineer             | Define vector DB and embedding requirements for RAG   |
 |                     | Software Engineer         | Integrate AI capabilities into applications         |
 |                     | Product Manager           | Translate business needs into feasible AI solutions |
 |                     | Platform Engineer         | Coordinate scaling, monitoring, cost optimization   |

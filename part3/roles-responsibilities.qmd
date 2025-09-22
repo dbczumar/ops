@@ -188,57 +188,34 @@ Primary Responsibilities:
 * Implement few-shot learning examples and chain-of-thought prompting
 * Optimize prompts for different models and use cases
 
-## Key Role Interactions {.unnumbered}
+## Key Role Interactions 
 
-Effective GenAI projects depend on strong cross-functional collaboration, with roles working together to align technical, operational, and business needs. The table below illustrates potential interactions between roles, along with examples of their purposes.
+Effective GenAI projects depend on strong cross-functional collaboration, with roles working together to align technical, operational, and business needs. Common collaboration patterns are:
 
+#### Agent Implementation Team {.unnumbered}
 
-| Role                | Interacts With            | Example Purpose of Interaction                              |
-|---------------------|---------------------------|-----------------------------------------------------|
-| **AI Engineer**     | Data Engineer             | Define vector DB and embedding requirements for RAG   |
-|                     | Software Engineer         | Integrate AI capabilities into applications         |
-|                     | Product Manager           | Translate business needs into feasible AI solutions |
-|                     | Platform Engineer         | Coordinate scaling, monitoring, cost optimization   |
-| **Data Engineer**   | AI Engineer               | Provide structured data & retrieval infrastructure  |
-|                     | Platform Engineer         | Scale data infra, manage storage                    |
-|                     | SME                       | Validate data relevance, preprocessing              |
-|                     | Software Engineer         | Support API/data access for features                |
-| **Software Engineer** | AI Engineer             | Consume AI services, implement UI/UX                |
-|                     | Product Manager           | Build user experiences to meet requirements         |
-|                     | Data Engineer             | Integrate APIs for data access                      |
-|                     | Platform Engineer         | Deploy apps, enable monitoring                      |
-| **Platform Engineer** | AI Engineer             | Model deployment, API management                    |
-|                     | Data Engineer             | Vector DB/data pipelines infra                      |
-|                     | Software Engineer         | CI/CD, deployment, monitoring                       |
-|                     | Cost Management           | Manage & optimize AI infra costs                    |
-| **SME**             | AI Engineer               | Provide domain knowledge for prompts, validation    |
-|                     | Product Manager           | Prioritize use cases based on business value        |
-|                     | Data Engineer             | Validate data quality                               |
-|                     | End Users                 | Gather feedback, validate AI solution               |
-| **Product Manager** | AI Engineer               | Assess feasibility, define success metrics          |
-|                     | Executive Sponsor         | Align with business goals, priorities               |
-|                     | SME                       | Validate use cases                                  |
-|                     | End Users                 | Collect feedback on usability                       |
-| **Executive Sponsor** | Product Manager         | Define strategic priorities                         |
-|                     | AI Ethics Officer         | Governance and risk frameworks                      |
-|                     | Cost Management           | AI investment, ROI tracking                         |
-|                     | Legal/Compliance          | Ensure regulatory compliance                        |
-| **AI Ethics Officer** | Executive Sponsor       | Advise on ethics, regulations                       |
-|                     | AI Safety Engineer        | Translate ethics into technical safeguards          |
-|                     | Legal/Compliance          | Ensure alignment with law                           |
-|                     | All Teams                 | Review implementations for compliance               |
-| **AI Safety Engineer** | AI Engineer            | Review implementations for vulnerabilities          |
-|                     | Platform Engineer         | Monitoring, alerting                                |
-|                     | AI Ethics Officer         | Align technical safety with ethical policies        |
-|                     | Security Teams            | Coordinate on AI-specific threats                   |
-| **LLMOps Engineer** | AI Engineer               | Support prompt optimization/testing                 |
-|                     | Platform Engineer         | Caching, routing infra                              |
-|                     | Data Engineer             | Context retrieval optimization                      |
-|                     | Cost Management           | Track & optimize model usage costs                  |
-| **Prompt Engineer** | AI Engineer               | Collaborate on production prompt implementation     |
-|                     | SME                       | Translate domain knowledge into prompts             |
-|                     | Product Manager           | Align prompts with user goals                       |
-|                     | End Users                 | Feedback on prompt effectiveness                    |
+**AI Engineer + Data Engineer + Platform Engineer**  
 
+- Co-develop agentic GenAI solutions, including retrieval-augmented generation (RAG) pipelines and tool integrations  
+- Joint responsibility for solution scalability, reliability, and performance  
 
+#### Product Development Chain  {.unnumbered}
 
+**Product Manager + AI Engineer + Software Engineer**  
+
+- Translate business requirements into GenAI features step by step  
+- Ensure clear handoffs with defined success criteria  
+
+#### AI Governance Board  {.unnumbered}
+
+**AI Ethics Officer + AI Safety Engineer + Legal/Compliance**  
+
+- Review GenAI implementations for ethical and legal compliance  
+- Conduct risk assessments and define mitigation strategies  
+
+#### Cost Management Team  {.unnumbered}
+
+**Finance + Platform Engineer + AI Engineer**  
+
+- Monitor and optimize GenAI usage and infrastructure costs  
+- Track ROI and align budget with business priorities  

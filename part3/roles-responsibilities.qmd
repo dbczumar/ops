@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The emergence of AgentOps represents a fundamental shift in how organizations structure and manage AI-powered systems. It introduces the need for new role definitions, collaborative patterns, and operational frameworks to handle AI agents, non-deterministic behaviors, and multi-agent interactions. This evolution requires both role specialization and cross-functional integration.
+The emergence of AgentOps represents a fundamental shift in how organizations structure and manage AI-powered systems. It introduces the need for new roles, collaborative patterns, and operational frameworks to handle the non-deterministic behaviors of AI agents and multi-agent interactions. This evolution requires both role specialization and cross-functional collaboration.
 In this section, we will explore key roles and responsabilities within GenAI projects.
 
 ## Key Roles

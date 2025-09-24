@@ -36,7 +36,7 @@ Primary Responsibilities:
 * Create data pipelines that inject structured business data into AI prompts (customer records, product catalogs, transaction history)
 * Process unstructured documents for AI consumption
 * Handle multi-modal data preprocessing (images, audio, video) for specialized AI applications
-* Build and maintain vector databases for semantic search and RAG applications
+* Build and maintain vector databases for semantic search and document retrieval
 * Implement embedding pipelines using embedding models
 * Manage batch processing jobs for large-scale document embedding and updates
 * Prepare and version datasets for model fine-tuning when required

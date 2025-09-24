@@ -7,7 +7,7 @@ In this section, we will explore key roles and responsabilities within GenAI pro
 
 ## Key Roles
 
-Most organisations are consumers of AI models rather than builders. These organizations are focused on building and deploying high quality agents that leverage existing models, while ensuring safety and controlling costs.
+Rather than training their own models, most organizations are focused on building and deploying high quality agents that leverage existing models, while ensuring safety and controlling costs.
 
 The key roles listed below relate to how organizations implement GenAI. Because GenAI work requires significant collaboration, the exact division of responsibilities often depends on the organization’s size. In some cases, one person may take on several roles, or hold a hybrid role that combines responsibilities from different areas.
 
@@ -20,22 +20,22 @@ An AI Engineer integrates and optimizes pre-trained AI models into production ap
 
 Primary Responsibilities:
 
-* Integrate and fine-tune existing LLMs with most organizations using pre-trained models via APIs
-* Design and implement RAG (Retrieval Augmented Generation) architectures for domain specific applications
-* Develop prompt engineering strategies and optimize prompt templates for production use
-* Build evaluation and testing frameworks for non-deterministic AI systems, ensuring quality despite variable outputs
-* Optimize for cost and performance on the application logic level using prompt optimization, model selection, workflow design that minimizes API calls and output optimizaion.
-* Create AI agents workflows and orchestrate AI tool chains for complex tasks
-* Deploy AI models into production environments with proper versioning and monitoring
+* Integrate and fine-tune existing LLMs with business logic and data sources, typically using APIs to pre-trained models
+* Develop tools that give AI agents access to APIs and proprietary and external data sources
+* Design and implement the agent behavior
+* Build evaluation and testing to ensure quality
+* Refine performance based on evaluation output and feedback
+* Optimize for cost and performance on the application logic level using prompt optimization, model selection, workflow design that minimizes API calls and response formatting that reduces token consumption.
+* Deploy AI agents into production with proper versioning and monitoring
 
 #### Data Engineer {.unnumbered}
-GenAI Data Engineers support all data needs for AI applications. They're the bridge between raw data sources and AI systems, whether that's for RAG, AI agents, fine-tuning, analytics, or traditional business intelligence.
+GenAI Data Engineers support all data needs for AI applications. They're the bridge between raw data sources and AI systems, whether that's for RAG pipelines, AI agents, fine-tuning, analytics, or traditional business intelligence.
 
 Primary Responsibilities:
 
-* Create data pipelines that inject structured business data into AI prompts (customer records, product catalogs, transaction history)
-* Process unstructured documents for AI consumption
-* Handle multi-modal data preprocessing (images, audio, video) for specialized AI applications
+* Design and maintain data pipelines that deliver structured business data (e.g., customer records, product catalogs, transaction history) into AI workflows. This includes extracting the data from source systems, transforming it into defined schemas, validating data quality and loading the resulting data into a table or feature store.
+* Build pipelines to transform unstructured documents (e.g., PDFs, emails, reports) into machine readable formats. This includes OCR and text extraction, metadata tagging, text cleaning, chunking large documents, converting to structured formats (e.g. json).
+* Develop preprocessing workflows for multi-modal data (images, audio, video), including tasks such as resizing images, extracting features, transcribing audio, segmenting videos, generating metadata and storing the outputs.
 * Build and maintain vector databases for semantic search and document retrieval
 * Implement embedding pipelines using embedding models
 * Manage batch processing jobs for large-scale document embedding and updates
@@ -44,19 +44,11 @@ Primary Responsibilities:
 * Implement feedback loops to capture user interactions and AI system responses for analysis
 
 #### Software Engineer {.unnumbered}
-A Software Engineer in GenAI teams builds user-facing applications that seamlessly incorporate AI capabilities, handling the integration, interface, and reliability challenges of non-deterministic AI systems.
+A software engineer integrates the agent into larger application. This could involve: 
 
-Primary Responsibilities:
-
-* Build user interfaces for AI agents (e.g. chat interfaces, AI assistants)
-* Design and build the user interface elements that make interactions with the GenAI solution smooth and intuitive, such as real-time response streaming, typing indicators, and feedback tools
-* Develop backend services that integrate GenAI capabilities into core business processes and applications
-* Manage conversation state and session persistence in GenAI applications
+* Design and building the user interface elements that make interactions with the GenAI solution smooth and intuitive, such as real-time response streaming, typing indicators, and feedback tools
+* Develop backend services that integrate GenAI capabilities into existing core business applications
 * Implement application-level error handling and user-friendly fallback experiences
-* Create end-to-end testing strategies for features with non-deterministic GenAI components
-* Optimize application performance
-* Ensure GenAI solutions are reliably released and continuously monitored through CI/CD pipelines
-* Implement telemetry and logging for debugging interactions
 
 
 #### AI Platform Engineer {.unnumbered}

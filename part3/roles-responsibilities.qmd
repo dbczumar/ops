@@ -86,7 +86,6 @@ Primary Responsibilities:
 * Define domain specific quality criteria and acceptance thresholds  
 * Bridge communication between technical teams and business stakeholders  
 * Ensure GenAI solutions comply with industry regulations and standards  
-* Create domain specific evaluation criteria for GenAI solution performance 
 
 ### Leadership and Strategy Roles
 

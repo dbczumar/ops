@@ -59,7 +59,7 @@ Primary Responsibilities:
 * Implement telemetry and logging for debugging interactions
 
 
-#### Platform Engineer {.unnumbered}
+#### AI Platform Engineer {.unnumbered}
 
 A Platform Engineer in GenAI provides the scalable, cost-controlled infrastructure that enables AI applications to run reliably in production, managing everything from API gateways to vector database operations.
 

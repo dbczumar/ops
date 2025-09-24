@@ -28,7 +28,7 @@ These activities can be implemented as part of a roughly two-week design and pla
     - which aspects of the workflow should be handled by tool-calling sub-agents or by linear workflows 
     - how each sub-component should be evaluated for quality  
 3. List out the information that different stakeholders, from C-level executives to business users to developers need from the agentic application
-4. Design tracing and logging modules addressing the needs listed in step 3. 
+4. Design tracing and logging modules to capture the information identified in step 3. 
 5. Map the access controls each agent and final end-user requires.  
 6. Future planning: identify components that other projects can reuse and build abstractions accordingly
 

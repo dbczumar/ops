@@ -9,7 +9,7 @@ In this section, we will explore key roles and responsabilities within GenAI pro
 
 Most organisations are consumers of AI models rather than builders. These organizations are focused on building and deploying high quality agents that leverage existing models, while ensuring safety and controlling costs.
 
-The key roles listed below relate to how organisations implement GenAI. Because GenAI work requires significant collaboration, the exact division of responsibilities often depends on the organisation’s size. In some cases, one person may take on several roles, or hold a hybrid role that combines responsibilities from different areas.
+The key roles listed below relate to how organizations implement GenAI. Because GenAI work requires significant collaboration, the exact division of responsibilities often depends on the organization’s size. In some cases, one person may take on several roles, or hold a hybrid role that combines responsibilities from different areas.
 
 ### Technical Roles
 

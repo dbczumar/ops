@@ -196,7 +196,7 @@ This workshop additionally provides:
 - Guided error analysis to identify what judges are high value
 - Proven methodology for collecting high-quality data
 - Tools for annotation, IRR computation, and disagreement resolution
-- Compatibility with MLFlow traces
+- Compatibility with MLflow traces
 - This gives teams Surge/Scale/SuperAnnotate-style capabilities in-house, with their SMEs, for a fraction of the time and cost. They can then take these gold labels to our Judge Builder Product for auto-optimization.
 
 ##### Workshop outline 

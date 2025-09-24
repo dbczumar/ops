@@ -82,7 +82,7 @@ Primary Responsibilities:
 
 * Validate GenAI solution outputs for domain accuracy and relevance  
 * Identify high value use cases specific to the business domain  
-* Provide training data examples and feedback for prompt optimization  
+* Provide training data examples and feedback that is used to improve agent quality
 * Define domain specific quality criteria and acceptance thresholds  
 * Bridge communication between technical teams and business stakeholders  
 * Ensure GenAI solutions comply with industry regulations and standards  

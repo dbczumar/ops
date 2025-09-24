@@ -12,7 +12,7 @@ In another example, a telco customer support agent that investigates an unexpect
 
 To address this complexity, we've identified a repeatable sequence of planning activities that we've found to be important for mapping out our problem space and for aligning stakeholders. Focus on these key areas at the start of a project, and the project's chances of success increase greatly. 
 
-These activities can be implemented as part of a ~two week design and planning workshop at the start of a project, something like a design sprint. Design sprints are time-boxed collaborative workshops that bring together cross-functional teams to rapidly prototype and validate solutions before committing significant development resources. Originally popularized by Google Ventures, design sprints compress months of traditional planning into an intensive, focused period where teams can align on design decisions, identify key data sources and plan evaluation suites before diving into the complex technical implementation.
+These activities can be implemented as part of *design sprint*. Design sprints are time-boxed collaborative workshops that bring together cross-functional teams to rapidly prototype and validate solutions before committing significant development resources. Originally popularized by Google Ventures, design sprints compress months of traditional planning into an intensive, focused period where teams can align on design decisions, identify key data sources and plan evaluation suites before diving into the complex technical implementation.
 
 ## Key planning activities to prioritize
 

@@ -7,7 +7,7 @@ In this section, we will explore key roles and responsabilities within GenAI pro
 
 ## Key Roles
 
-Most organisations are consumers of AI models rather than builders. Their primary focus tends to be on integration and orchestration, agent systems, cost management, prompt engineering, and ensuring safety and governance.
+Most organisations are consumers of AI models rather than builders. These organizations are focused on building and deploying high quality agents that leverage existing models, while ensuring safety and controlling costs.
 
 The key roles listed below relate to how organisations implement GenAI. Because GenAI work requires significant collaboration, the exact division of responsibilities often depends on the organisation’s size. In some cases, one person may take on several roles, or hold a hybrid role that combines responsibilities from different areas.
 

@@ -39,7 +39,7 @@ Traditional data engineers are rapidly acquiring new skills in vector databases,
 
 Primary Responsibilities:
 
-* Design and maintain pipelines for structured data by delivering business data (e.g., customer records, product catalogs, transactions) into AI workflows by extracting from source systems, transforming into schemas, validating quality, and loading into feature stores or AI-ready tables
+* Design and maintain pipelines for structured data by delivering business data (e.g., customer records, product catalogs, transactions) into AI workflows by extracting from source systems, transforming into schemas, validating quality, and loading into feature stores or tables
 * Build pipelines for unstructured documents such as PDFs, emails, and reports, using OCR and text extraction, metadata tagging, text cleaning, chunking large documents and conversion into structured formats (e.g. JSON).
 * Develop preprocessing workflows for multimodal data (images, audio, video), including resizing images, extracting features, transcribing audio, segmenting videos, generating metadata and storing the outputs.
 * Support retrieval and embedding systems by building and maintaining vector databases for semantic search, implementing embedding pipelines, and running batch jobs to embed and update large document collections.
@@ -51,6 +51,8 @@ A software engineer integrates the agent into larger application, making AI capa
 
 Software engineers working with GenAI have had to adapt to non-deterministic systems. They've developed new patterns for handling variable response times, streaming outputs, and graceful degradation when AI services fail.
 
+Primary Responsibilities:
+
 * Design and building the user interface elements that make interactions with the GenAI solution smooth and intuitive, including real-time response streaming, typing indicators, and feedback tools, and conversation management
 * Develop backend services that integrate GenAI capabilities into existing core business applications
 * Implement application-level error handling and user-friendly fallback experiences, ensuring the application remains functional even when AI services are unavailable or produce unexpected results
@@ -61,6 +63,8 @@ Software engineers working with GenAI have had to adapt to non-deterministic sys
 A Platform Engineer in GenAI provides the scalable, cost-controlled infrastructure that enables AI applications to run reliably in production.
 
 Platform engineers have had to rapidly adapt to the unique challenges of AI infrastructure. Unlike traditional applications where resource usage is predictable, AI workloads can vary dramatically based on prompt length, model selection, and user behavior.
+
+Primary Responsibilities:
 
 * Provision and scale the infrastructure that supports GenAI services and applications
 * Build observability for GenAI systems (token usage monitoring, latency tracking, error rates)

@@ -27,8 +27,7 @@ Primary Responsibilities:
 * Integrate and fine-tune existing LLMs with business logic and data sources, typically using APIs to pre-trained models
 * Develop tools that give AI agents access to APIs and proprietary and external data sources
 * Design and implement the agent behavior
-* Build evaluation and testing to ensure quality
-* Refine performance based on evaluation output and feedback
+* Build evaluation and testing suits to ensure quality
 * Optimize for cost and performance on the application logic level using prompt optimization, model selection, workflow design that minimizes API calls and response formatting that reduces token consumption.
 * Deploy AI agents into production with proper versioning and monitoring
 

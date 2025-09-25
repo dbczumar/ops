@@ -16,10 +16,6 @@ These activities can be implemented as part of a ~two week design and planning w
 
 ## Key planning activities to prioritize
 
-To address this complexity, we've identified a repeatable sequence of planning activities that we've found to be important for mapping out our problem space and for aligning stakeholders. Focus on these key areas at the start of a project, and the project's chances of success increase greatly. 
-
-These activities can be implemented as part of a roughly two-week design and planning workshop at the start of a project, something like a design sprint. Design sprints are time-boxed collaborative workshops that bring together cross-functional teams to rapidly prototype and validate solutions before committing significant development resources. Originally popularized by Google Ventures, design sprints compress months of traditional planning into an intensive, focused period where teams can align on design decisions, identify key data sources and plan evaluation suites before diving into the complex technical implementation.
-
 ### Suggested planning sequence
 
 1. Map out in detail the current workflow as it is executed by humans
@@ -27,8 +23,8 @@ These activities can be implemented as part of a roughly two-week design and pla
     - the required structured and unstructured data sources
     - which aspects of the workflow should be handled by tool-calling sub-agents or by linear workflows 
     - how each sub-component should be evaluated for quality  
-3. List out the information that different stakeholders, from C-level executives to business users to developers need from the agentic application
-4. Design tracing and logging modules addressing the needs listed in step 3. 
+3. List out the observability requirements that different stakeholders, from C-level executives to business users to developers need from the agentic application
+4. Design tracing and logging modules addressing the needs listed in step 3. Tracing and logging can be use default sensible defaults such as those offered by `mlflow.autolog()` to begin with, and then customized further later. 
 5. Map the access controls each agent and final end-user requires.  
 6. Future planning: identify components that other projects can reuse and build abstractions accordingly
 
@@ -95,41 +91,85 @@ Unstructured data sources
 | telco_customer_support_dev.bronze.support_tickets | Free-text issue descriptions from customers |
 | telco_customer_support_dev.bronze.support_tickets | Free-text resolution details from support agents |
 
+**Evaluation** 
 
-### Instrumentating observability based on personas
+The business workflows that enterprises want to automate with agents can be complex, with branches, conditional fields and human-in-the-loop-checks needed. At the start of a project, rather than build an agentic workflow that covers the entire business process in one go, teams will define a "thin slice", or simplified version of the workflow that is just complex enough to visualise how data will flow through the workflow.
 
-TODO: something here about involving stakeholders early in the planning process and providing good information with user interfaces for internal stakeholders? 
+Then, for each substep within the workflow, the expected inputs and outputs are defined. What makes a "high quality" response is easier define if outputs are structured JSON or binary true / false judgements. Structuring outputs in this way simplifies evaluation because established metrics such as F1 scores can be used. As far as possible, structured responses should be prioritised over free text responses.  
 
-In the chapter Principle 3: The technical practices of learning, we talked at length about how to use tracing to provide visibility into the workings of our agentic application. In this section, we want to expand on this section to cover how traces might be used to provide different stakeholders with a view on how the agent is functioning, in a way that addresses what they care about. 
+There may be unstructured fields, such as incident summaries and insurance claim notes, developing automated LLM judges aligned with the business domain is important, and something we cover in Part 2.3 Feedback Principles.
 
-Building for different personas: 
+During development, the go-to person for judging "quality" is someone who can understand both the business use case and the technical aspects. We've seen various personas take on this role, from product managers, scrum masters, data scientists attached to the business department, or technically savvy business users.
 
-1. C-suite executives: cares about optics - 
 
-- risk and compliance
-- audit trail completeness 
-- overall claims distribution
+### Customizing observability reports and dashboards based on personas 
 
-business metrics
+In the chapter 2.3 The principle of feedback, we discussed how developers can use [MLflow Tracing](https://mlflow.org/docs/3.3.2/genai/tracing/app-instrumentation/), [MLflow Assessments](https://mlflow.org/blog/mlflow-assessment-ui) and the [MLflow Feedback API](https://mlflow.org/docs/3.3.2/genai/tracing/collect-user-feedback/) to collect data on our agentic system's quality. In this section, expand on the concept of observability beyond the developer. We cover how traces and feedback can be used to provide different stakeholders with a view on how the agent is functioning, in a way that addresses what they care about. 
 
-- processing cost per claim 
-- ROI versus traditional processing methods 
-- settlement accuracy
+Below are some examples of stakeholders, their priorities and the resulting interfaces, built on a foundation of data collected from MLflow Traces and the Feedback API
 
-quality and accuracy indicators
-- agent decision accuracy rate compared to human expert reviews
-- escalation rate to human agents
-- quality score trends over time 
-- false positive / negative rates for claim approvals
 
-2. Business users: cares about interpretability, understand how agents are executing different steps in the workflow so they can troubleshoot / provide inputs if needed. Still want autonomy over the workflows as a human-in-the-loop
-3. Developers: want as much granularity as possible. detailed telemetry not only into inputs and outputs, but operational metrics and latency bottlenecks as well. 
+**Persona #1: Business subject-matter-experts (SMEs) from the customer support department**
 
-![end-user-view](./files/data-int-off.png)
+Priorities:
+
+- transparency into agent chain-of-thought reasoning, tool-calling and decision making 
+- ability to provide feedback in order to troubleshoot problematic steps in a workflow
+- ability to have an overview of overall agent performance without looking at individual traces
+
+**Business SME and developer user interface**
+
+- in addition to the conversation UI, include side panel showing MLflow Trace outlining agent reasoning, tool-calling and response generation steps
 
 ![business SME view](./files/data-int-on.png)
 
-![developer view](./files/op-metrics.png)
+- interface for giving feedback on response quality. Text inputs are recorded as MLflow Assessments on the backend and attached to traces. Assessments and traces are then viewable by a developer from the MLflow Experiments page in a Databricks workspace.
+
+![UI labelling session](./files/feedback.png)
+
+![MLflow Experiment reflecting feedback from an SME labelling session ](./files/mlflow-label-session.png)
+
+- interface for customizing MLflow label schemas to a specific use case
+![Assessments](./files/label-schemas.png)
+
+- overall report, refreshed periodically, summarising key metrics 
+![Summary report](./files/summary-analysis-report.png){width=300}]
+
+Raw MLflow traces are granular and information-dense. Because traces can be synced to a Delta table, developers can process raw traces to produce summaries and reports that are digestible by a non-technical audience. 
+
+Additionally, although not business SMEs may not be provided user access to a Databricks workspace and the MLflow Experiments UI, hosting a feedback UI on Databricks Apps, and making the app accessible via Databricks One (a Databricks interface specifically for business users), SMEs can be productively involved and informed throughout the AI agent development process.  
+
+**Persona #2: Executive sponsor**
+
+Priorities:
+
+- Return on invesment, often tracked through metrics like automation rate, productivity gains, cost reductions, or revenue impact, and rapid time-to-value.
+- Agent response quality
+- Risk and compliance
+
+**Executive sponsor view**
+
+- ROI dashboard based on aggregated metrics from Delta tables
+![business-kpis](./files/business-kpis.png)
+
+**Customer Priorities **
+
+- Fast resolution of issue / questions
+- High response reliability
+- Ability to escalate issues to a human agent if needed
+- Strong data privacy and security guarantees
+
+**Customer UI view**
+
+Databricks Apps flexible app-hosting solution that allows prototyped apps to be quickly deployed for testing. 
+
+Here is a prototype sample UI might include:
+
+- pre-set cards for commonly-asked questions
+- cited sources for reliability
+- ability to provide quick feedback on the response quality through like / dislike buttons. These feedback actions can be tied by to the specific customer trace through the `mlflow.log_feedback()` API endpoint hosted on a FastAPI backend 
+
+![end-user-view](./files/data-int-off.png)
 
 ### Designing test suites 
 #### Using top-down and bottom-up approaches together
@@ -149,42 +189,19 @@ Generate various customer personas and scenarios, have an LLM create sample quer
         "contexts": [
             QueryContext("billing", True, True, "concerned customer", "bill inquiry"),
             QueryContext("billing", True, True, "budget-conscious customer", "payment planning"),
-            QueryContext("billing", True, False, "confused customer", "charge explanation"),
-            QueryContext("billing", True, True, "data-heavy user", "usage verification"),  # Enhanced
             QueryContext("billing", True, True, "traveling customer", "roaming charges"),
-            QueryContext("billing", True, True, "usage-monitoring customer", "usage tracking"),
-            QueryContext("billing", True, True, "business customer", "usage reporting"),
-            QueryContext("billing", True, True, "family plan customer", "usage analysis"),
-        ],
+            ],
         "base_scenarios": [
             "customer sees unexpected charges on their bill",
             "customer wants to know when payment is due",
             "customer needs breakdown of current month charges",
-            "customer is questioning data usage amounts", 
-            "customer wants payment history for tax purposes",
-            "customer needs to understand prorated charges",
-            "customer is asking about auto-pay status",
-            "customer wants to dispute a specific charge",
-            "customer needs usage details for expense reporting",
-            "customer is planning data usage for upcoming month",
-            "customer wants to know their data usage for a specific month",
-            "customer needs to check voice minutes used in last billing cycle", 
-            "customer is asking about SMS usage over a date range",
-            "customer wants to compare usage between different months",
-            "customer needs total usage breakdown for expense reporting",
-            "customer is checking if they're approaching data limits",
-            "customer wants to analyze usage patterns over time",
-            "customer needs usage details for a specific billing period",
-            "customer is tracking usage to optimize their plan",
-            "customer wants to know peak usage periods",
-            "customer needs usage data for tax deduction purposes",
-            "customer is monitoring family member usage on shared plan",
+            "customer is questioning data usage amounts",
         ]
     },
 ```    
 **Bottoms-up approach**
 
-Conduct error analysis based on sample traces, then align LLM judge outputs with SME feedback to create automated tests
+A more bottoms-up approach, where we conduct error analysis based on sample traces, then align LLM judge outputs with SME feedback to create automated tests, is outlined in more detail in chapter 2.2. Here, we move beyond a purely developer-focused way of constructing bottoms-up evaluation to explore how to also gather analysis and feedback from non-developer stakeholders through an in-person workshop format.
 
 This exercise is best down in a workshop format with SMEs, developers and other stakeholders This is
 
@@ -271,14 +288,7 @@ class BaseScorer(ABC):
         self.sample_rate = sample_rate
 
     @abstractmethod
-    def get_offline_scorer(self):
-        """Implementation of custom scorer for online evaluation."""
-        pass
-
-    @abstractmethod
-    def get_online_scorer(self):
-        """Implementation of custom metric for offline evaluation."""
+    def get_make_judge_scorer(self):
+        """Implementation of LLM judge evaluation wrapping MLflow make_judge"""
         pass
 ```
-
-Data classes

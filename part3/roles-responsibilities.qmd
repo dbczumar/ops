@@ -28,7 +28,8 @@ Primary Responsibilities:
 * Develop tools that give AI agents access to APIs and proprietary and external data sources
 * Design and implement the agent behavior
 * Build evaluation and testing suits to ensure quality
-* Optimize for cost and performance on the application logic level using prompt optimization, model selection, workflow design that minimizes API calls and response formatting that reduces token consumption.
+* Refine performance based on output of evaluation suits and SME feedback
+* Optimize agent design for cost and performance. Commonly used techniques include using prompt optimization, model selection, smart workflow designs that minimize API calls and response formatting that reduces token consumption
 * Deploy AI agents into production with proper versioning and monitoring
 
 #### Data Engineer {.unnumbered}

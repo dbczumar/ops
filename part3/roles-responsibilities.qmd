@@ -59,7 +59,7 @@ Primary Responsibilities:
 
 #### AI Platform Engineer {.unnumbered}
 
-A Platform Engineer in GenAI provides the scalable, cost-controlled infrastructure that enables AI applications to run reliably in production.
+A Gen  AI Platform Engineer provides scalable, cost-controlled infrastructure that enables AI applications to run reliably in production.
 
 Platform engineers have had to rapidly adapt to the unique challenges of AI infrastructure. Unlike traditional applications where resource usage is predictable, AI workloads can vary dramatically based on prompt length, model selection, and user behavior.
 

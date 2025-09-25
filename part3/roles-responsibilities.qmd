@@ -7,7 +7,7 @@ In this section, we will explore key roles and responsibilities within GenAI pro
 
 ## The Evolution of Roles in the GenAI Era
 
-Rather than training their own models, many organizations are focused on building and deploying high quality agents that leverage existing models, while ensuring safety and controlling costs. This shift has fundamentally changed the skills required and created new career paths.
+This shift has fundamentally changed the skills required from workers and created new career paths from them.
 
 In many cases, traditional data scientists who once focused on statistical modeling are transitioning to AI Engineers, applying their understanding of model behavior to prompt engineering and agent design. MLOps engineers are evolving into specialists who manage the unique challenges of LLM deployments. Data engineers are expanding their expertise to include vector databases and embedding pipelines.
 

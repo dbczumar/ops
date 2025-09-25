@@ -38,7 +38,7 @@ Traditional data engineers are rapidly acquiring new skills in vector databases,
 
 Primary Responsibilities:
 
-* Design and maintain pipelines for structured data by delivering business data (e.g., customer records, product catalogs, transactions) into AI workflows by extracting from source systems, transforming into schemas, validating quality, and loading into feature stores or tables
+* Design and maintain structured data pipelines that connect business-level data (e.g., customer records, product catalogs, transactions) with AI workflows. These pipelines typically involve extracting data from source systems into schemas customized for a use case, validating data quality and sanitizing data to remove sensitive information
 * Build pipelines for unstructured documents such as PDFs, emails, and reports, using OCR and text extraction, metadata tagging, text cleaning, chunking large documents and conversion into structured formats (e.g. JSON).
 * Develop preprocessing workflows for multimodal data (images, audio, video), including resizing images, extracting features, transcribing audio, segmenting videos, generating metadata and storing the outputs.
 * Support retrieval and embedding systems by building and maintaining vector databases for semantic search, implementing embedding pipelines, and running batch jobs to embed and update large document collections.

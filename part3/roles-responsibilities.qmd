@@ -46,7 +46,7 @@ Primary Responsibilities:
 
 
 #### Software Engineer {.unnumbered}
-A software engineer integrates the agent into larger application, making AI capabilities accessible and reliable for end users.
+A software engineer integrates the agent system into a larger application, making AI capabilities accessible for end users. Common end-user interfaces include bot integrations with Slack and Microsoft Teams, summary analysis reports delivered to an inbox daily, or standalone chat interfaces. 
 
 Software engineers working with GenAI have had to adapt to non-deterministic systems. They've developed new patterns for handling variable response times, streaming outputs, and graceful degradation when AI services fail.
 

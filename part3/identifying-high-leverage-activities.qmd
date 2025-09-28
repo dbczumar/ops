@@ -222,18 +222,19 @@ This workshop additionally provides:
 
 ### Future planning: identify components that other projects can reuse and build abstractions accordingly
 
-Base classes for agents
+The organizations we work have long use-case backlogs. They need a system for reliably developing and deploying not a few, but tens, sometimes hundreds of Generative AI use cases. Moreover, these use caes are distributed across multiple development teams spread across different departments. 
 
-- has uniform way of initializing configurations
-- configuration variables standardised eg. vector search endpoints, sub config object for managing UC assets
+In this organization setup, shared abstractions and reusable helper modules standardize how applications are developed and ensure that teams conform to best practices, especially around security, data privacy and evaluations. 
 
-Base classes for evaluation scorers 
+Below are some examples of shared abstractions that teams can use. These examples are available also from the ![Databricks Solutions Github repository](https://github.com/databricks-solutions). 
 
-- do the same thing with evaluation scorers 
+#### Example 1: Base Agent class
 
-Can also consider doing the same for various tracing EDA tools eg. summary report that can be used as a template and customised by different use case teams 
+In this example, a base agent class sets out some standard interfaces that all agents should implement: 
 
-TODO: include example from custom mlflow review repository
+- a uniform way of specifying Unity Catalog assets through a `UCConfig` class
+- a common way of easily initializing an agent through specifying a name as a string, which then calls the relevant configuration file
+- although not included here, a base agent class could also include class methods for initializing machine-to-machine authentication through the Databricks Workspace Client
 
 ```
 class BaseAgent(ResponsesAgent, abc.ABC):
@@ -270,7 +271,9 @@ class BaseAgent(ResponsesAgent, abc.ABC):
         """
 ```
 
-Base classes for evaluation scorers 
+#### Example 2: Base class for evaluation scorers 
+
+MLflow has many options for creating evaluation scorers. Teams new to agent development may not be familiar with how to select the right evaluation APIs for their use case. The ![`make_judge`](https://mlflow.org/docs/3.4.0/genai/eval-monitor/scorers/llm-judge/make-judge/) API for MLflow is a unified interface for all types of judge-based evaluation. Therefore, rather than spend development cycles trialling different evaluation scorers, developers in an organization can benefit from starting with an opiniated wrapper around the `make_judge` API to get started quickly with evaluation. 
 
 ```
 from abc import ABC, abstractmethod
@@ -292,3 +295,42 @@ class BaseScorer(ABC):
         """Implementation of LLM judge evaluation wrapping MLflow make_judge"""
         pass
 ```
+
+Example 3: MLflow CLI tool for common tasks
+
+Throughout development and evaluation, AI engineers across teams will use MLflow for a common set of tasks such as creating labelling sessions and generating evaluation reports. 
+
+One way to increase productivity is to provide a CLI wrapper for these common tasks. The benefit to this tool is twofold: developers can call these tools rather than create their own scripts, and these tools can also be provided to AI code agents such as Claude to speed up development. 
+
+Below is an example of having a Claude code prompt that leverages helper python scripts to setup a labelling session for business SMEs.
+
+```
+# Label Schemas Management
+
+Manage labeling schemas for your MLflow Review App. This command helps you view, create, modify, and delete schemas interactively.
+
+## Usage
+
+```bash
+/label-schemas [action]
+```
+
+## Actions
+
+### List Schemas (default)
+```bash
+/label-schemas
+```
+Shows all current labeling schemas in a beautiful format with details about each schema type, options, and instructions.
+
+**Context-Aware Suggestions**: When available, references experiment summaries from `experiments/[experiment_id]_summary.md` to suggest schemas tailored to your specific agent's capabilities and use cases.
+
+### Add New Schema
+```bash
+/label-schemas add [description]
+```
+
+Examples:
+- `/label-schemas add quality rating from 1 to 5`
+- `/label-schemas add helpfulness categorical with options: Very Helpful, Helpful, Not Helpful`
+- `/label-schemas add feedback text field for comments`

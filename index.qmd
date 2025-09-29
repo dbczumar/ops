@@ -22,10 +22,5 @@ This book covers the evolution from MLOps to LLMOps to AgentOps, focusing on:
 
 Each chapter builds on previous concepts while remaining modular enough to reference independently. Code examples are provided throughout, with complete implementations available in the `examples/` directory.
 
-## Contributing
-
-This is a community-driven project. See our [contribution guide](https://github.com/your-org/big-book-of-agent-ops) for how to get involved.
-
 ---
 
-*Let's build better agent systems together.*

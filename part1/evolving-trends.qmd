@@ -23,14 +23,24 @@ graph TD
 
 ## How Agents Differ from Other AI Systems
 
-### LLM vs RAG vs Agent
+Before examining how agents differ from other AI systems, it's important to understand the landscape of AI system architectures and their capabilities.
 
-| Pattern | What it is | Capabilities | Use Cases | Limitations | Ops Maturity |
-|---|---|---|---|---|---|
-| **LLM + prompt** | Single model call with a prompt. | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions | Low |
-| **Chain (e.g. basic RAG)** | Fixed, scripted steps (retrieve → augment → generate). | Knowledge retrieval + generation | Document search, knowledge base | Limited to retrieval | Moderate |
-| **Tool-calling agent** | LLM chooses which tool(s) to use at runtime. | Dynamic reasoning + actions | Task automation, workflows | Complexity, reliability | High |
-| **Multi-agent** | Router or coordinator orchestrates specialized sub-agents. | Decomposition, parallelism, role specialization, escalation paths. | Complex workflows and multi-domain support. Support triage across HR, IT, and Finance. | Orchestration overhead. Emergent loops. Hardest to debug and attribute. | Very High |
+### Core AI System Architectures
+
+**LLM with Prompt Engineering**: At its simplest, this involves sending a carefully crafted prompt to a language model and receiving a text response. Prompt engineering is the practice of designing and refining these prompts to elicit better responses—adjusting wording, providing examples, specifying output formats, and setting context. The model relies entirely on its training data and the information provided in the prompt.
+
+**RAG (Retrieval-Augmented Generation)**: RAG systems enhance LLMs by first retrieving relevant documents from a knowledge base, then including this retrieved context in the prompt. When a user asks a question, the system searches through indexed documents, selects the most relevant passages, and provides them to the LLM along with the original query. This allows the model to answer questions about information it wasn't trained on. RAG is often implemented using a vector database, since they excel at retrieving relevant unstructured data based on natural language queries.
+
+**Tool-calling Agents**: These systems give LLMs the ability to use external tools and APIs. Instead of just generating text, the agent can decide to call functions, query databases, execute code, or interact with other services. The agent reasons about which tools to use, in what order, and how to combine their outputs to accomplish a task.
+
+**Multi-agent Systems**: These architectures employ multiple specialized agents working together to solve complex problems. Agents might collaborate through various patterns—hierarchical coordination where a supervisor delegates to specialists, peer-to-peer communication where agents directly interact, or competitive approaches where multiple agents propose solutions. Each agent typically specializes in specific tasks or domains.
+
+| Pattern | What it is | Capabilities | Use Cases | Limitations |
+|---|---|---|---|---|
+| **LLM + prompt** | Single model call with a prompt. | Text generation, reasoning | Q&A, content creation | Static knowledge, no actions |
+| **Chain (e.g. basic RAG)** | Fixed, scripted steps (retrieve → augment → generate). | Knowledge retrieval + generation | Document search, knowledge base | Limited to retrieval |
+| **Tool-calling agent** | LLM chooses which tool(s) to use at runtime. | Dynamic reasoning + actions | Task automation, workflows | Complexity, reliability |
+| **Multi-agent** | Router or coordinator orchestrates specialized sub-agents. | Decomposition, parallelism, role specialization, escalation paths. | Complex workflows and multi-domain support. Support triage across HR, IT, and Finance. | Orchestration overhead. Emergent loops. Hardest to debug and attribute. |
 
 
 ### Ops Maturity Controls by Pattern
@@ -43,62 +53,80 @@ graph TD
 | **Deploy & rollback** | Optional canary<br>Quick rollback | Canary on index/prompt change<br>Rollback to last good | Canary routes + trace replay<br>Staged promotion | Orchestrator-level gates<br>Per-agent versioning |
 | **Monitoring & alerts** | Drift basics<br>Rate-limit spikes | Recall & latency drift<br>Index freshness, rate limits | Tool failures/timeouts<br>Quota & rate-limit alerts | Escalation & loop rates<br>Cost/latency by role. Rate-limit hot spots |
 
-### From MLOps to LLMOps to AgentOps
+## From MLOps to AgentOps
 
-```{mermaid}
-timeline
-    title Evolution of AI Operations
-    
-    2010s : MLOps
-           : Model training pipelines
-           : A/B testing
-           : Model monitoring
-           
-    2020s : LLMOps  
-           : Prompt engineering
-           : Fine-tuning workflows
-           : Context management
-           
-    2024+ : AgentOps
-           : Multi-agent orchestration
-           : Tool integration
-           : Autonomous workflows
-```
+As AI systems have evolved from predictive models to autonomous agents that take real-world actions, the operational practices—the tools, processes, and frameworks teams use to deploy and maintain these systems—have had to evolve too. Each generation has brought challenges that existing practices couldn't handle.
 
-## Key Differences Between Each Paradigm
+### The Evolution of AI Ops
 
-### MLOps Focus
-- Ship predictive models reliably
-- Structured data pipelines
-- Model accuracy metrics
-- Batch prediction workflows
-- Statistical model validation
+**MLOps (2010s)**: The set of processes and automation for managing data, code, and models to improve performance stability and long-term efficiency in ML systems. MLOps emerged as teams needed to move beyond experimental model training in notebooks to production-grade systems. It encompasses the entire ML lifecycle: data pipelines for feature engineering, model training and versioning, deployment infrastructure, monitoring for drift and performance degradation, and workflow orchestration to tie it all together. This requires unified governance for both data and models, scalable training infrastructure, CI/CD pipelines for model deployment, low latency model serving endpoints, and continuous monitoring to ensure models perform reliably over time.
 
-### LLMOps Focus
-- Ship LLM solutions grounded in data  
-- Prompt optimization
-- Context window management
-- Inference cost optimization
-- Safety and alignment
+**LLMOps (2020s)**: The practices and infrastructure required to tune, deploy, and manage large language models at scale. When models grew to billions of parameters, many teams faced new scale challenges: hosting models too large for single GPUs, managing distributed training across clusters, and controlling inference costs that could spiral out of control. LLMOps encompasses model optimization techniques like quantization and distillation, efficient tuning approaches using LoRA and QLoRA, prompt versioning and management, and safety measures to prevent harmful or biased outputs. Databricks provides managed infrastructure for tuning foundation models, optimized serving endpoints that handle batching and caching, cost controls to prevent budget overruns, and guardrails to ensure outputs meet safety and compliance standards.
 
-### AgentOps Focus
-- Operate safely tool-using single- and multi-agent systems
-- **Multi-step reasoning** chains
-- **Tool integration** and API management
-- **Autonomous decision** making
-- **Human-in-the-loop** workflows
+**AgentOps (2024+)**: The practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions. Unlike LLMs that operate in single request-response cycles, agents execute multi-step workflows using tools to interact with real systems—querying databases, calling APIs, modifying files, and executing code. This shift from single-step inference to active tool use introduced entirely new operational challenges: establishing permission boundaries for tools, tracing complex multi-step reasoning chains, preventing cascading failures when agents make mistakes, handling retry logic and error recovery, and orchestrating multiple agents without conflicts or infinite loops.
 
-## Definition of Agent Ops
+Databricks addresses these challenges through Agent Bricks, a managed platform that automatically builds, optimizes, and deploys AI agents—handling model selection, fine-tuning with proprietary data, evaluation, monitoring, and continuous optimization behind the scenes. Databricks also provides capabilities for DIY, code-first agent development: evaluation frameworks to test agent behavior before deployment, comprehensive tracing for debugging multi-step decisions, secure tool execution with permission controls, monitoring for cost and performance, and serving infrastructure that scales to zero when idle.
 
-> **Agent Ops** is the practice and tooling to build, evaluate, deploy, govern, monitor, and maintain autonomous AI systems that can reason, plan, and take actions to achieve complex goals.
+### Core AgentOps Challenges
 
-Core principles include:
+Building on lessons from MLOps and LLMOps, AgentOps must address five key operational challenges:
 
-1. **Reliability**: Agents must perform consistently
-2. **Observability**: Understanding agent decision-making  
-3. **Safety**: Preventing harmful or unintended actions
-4. **Scalability**: Supporting multiple concurrent agents
-5. **Maintainability**: Evolving agent capabilities over time
+1. **Reliability**: Ensuring agents perform consistently across diverse inputs and edge cases
+2. **Observability**: Making every decision point and tool call traceable and explainable  
+3. **Safety**: Establishing boundaries to prevent harmful or unintended actions
+4. **Scalability**: Supporting multiple concurrent agents without resource conflicts
+5. **Maintainability**: Updating agent behaviors without breaking existing workflows
+
+## Leveraging Proprietary Data
+
+While prompt engineering and model selection are important, the ability to integrate and leverage proprietary, domain-specific data is what transforms agents from interesting demos into production-grade systems that deliver real business value. Without access to an organization's unique data and context, even the most sophisticated agents remain generic tools that struggle to address specific problems and use cases.
+
+Organizations that successfully integrate proprietary data into their agent systems gain differentiated capabilities that understand specific domains better than any generic solution, operational efficiency through reduced need for human intervention in routine tasks, continuous improvement by learning from unique data patterns and use cases, and a strategic moat where proprietary data becomes a defensible competitive advantage.
+
+### Why Generic LLMs Aren't Enough
+
+Public, general-purpose LLMs excel at high level reasoning and broad knowledge tasks, but enterprise agent deployments require:
+
+- **Domain expertise**: Industry-specific terminology, best practices, and regulations
+- **Organizational context**: Internal processes, policies, and historical decisions
+- **Real-time information**: Current inventory, live metrics, and up-to-date documentation
+- **Proprietary insights**: Customer data, trade secrets, and competitive intelligence
+
+### Common Data Integration Patterns
+
+Two fundamental approaches exist for integrating proprietary data into agent systems: retrieval, which accesses external data at runtime through tools, and fine-tuning, which embeds knowledge directly into model weights.
+
+#### Retrieval
+
+Retrieval enables agents to access external data during inference, keeping responses current without model retraining. The simplest retrieval pattern is RAG (Retrieval-Augmented Generation), which follows a fixed sequence: query the data source, retrieve relevant information, augment the prompt with this context, and generate a response. More sophisticated agent architectures use dynamic retrieval, where the agent reasons about which data sources to query, what information to retrieve, and how to combine results from multiple sources.
+
+##### Data Sources for Retrieval
+
+**Vector Databases**: Store embedded documents for semantic search, enabling agents to find conceptually similar information even when exact keywords don't match. Vector databases excel at identifying relevant documents within large stores of unstructured data. Databricks Vector Search is a native vector database integrated with Delta Lake on Databricks.
+
+**Structured Data Systems**: Enable SQL and structured queries against relational databases, NoSQL stores, data warehouses, and data lake formats like Delta and Iceberg tables. Agents can query these systems through tools like Databricks SQL or Lakebase.
+
+**APIs**: Provide real-time data from internal services and external providers. Agents call these APIs to fetch current prices, check inventory levels, retrieve user information, or trigger actions in other systems. Protocols like MCP (Model Context Protocol) enable agents to discover available data APIs and call them correctly and performantly.
+
+**Knowledge Graphs**: Represent entities and their relationships, allowing agents to traverse connections and reason about complex dependencies. Graph databases enable queries that would be inefficient in traditional databases, such as finding all entities within N degrees of separation.
+
+**Files and Objects**: Direct access to documents, images, PDFs, and other unstructured data stored in object storage (S3, Azure Blob), Volumes in Databricks Unity Catalog, file systems, or content management systems. Agents can parse these files on-demand to extract specific information.
+
+#### Fine-tuning and Adaptation
+
+Fine-tuning embeds domain-specific knowledge directly into model weights, eliminating the need to retrieve or include this information in every prompt. This approach works well for fundamental domain knowledge that rarely changes—industry terminology, company-specific conventions, or specialized reasoning patterns. Organizations typically fine-tune open-source models using techniques like LoRA (Low-Rank Adaptation) or QLoRA, which reduce computational costs by training only a small subset of parameters. Databricks Mosaic AI Fine Tuning provide managed infrastructure for fine-tuning LLMs on proprietary data.
+
+### Operational Complexity of Data Integration
+
+Integrating proprietary data introduces significant operational complexity:
+
+| Challenge | Impact on AgentOps |
+|---|---|
+| **Data freshness** | Requires indexing pipelines, update triggers, and cache invalidation |
+| **Access control** | Need fine-grained permissions and data governance policies |
+| **Quality assurance** | Must validate, clean, and version data sources |
+| **Retrieval performance** | Quickly finding relevant documents from large corpuses in real time |
+| **Compliance** | Ensuring data usage adheres to regulations (GDPR, HIPAA, etc.) |
 
 ## Agent Ops Anti-patterns
 

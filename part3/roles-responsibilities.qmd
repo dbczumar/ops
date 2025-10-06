@@ -32,6 +32,8 @@ Primary Responsibilities:
 * Optimize agent design for cost and performance. Commonly used techniques include using prompt optimization, model selection, smart workflow designs that minimize API calls and response formatting that reduces token consumption
 * Deploy AI agents into production with proper versioning and monitoring
 
+AI Engineers often leverage Model Serving for deployment, MLflow for experiment tracking, Vector Search for RAG implementations, and AI Playground for rapid prototyping and testing.
+
 #### Data Engineer {.unnumbered}
 GenAI Data Engineers support all data needs for AI applications. They're the bridge between raw data sources and AI systems, whether that's for RAG pipelines, AI agents, fine-tuning, analytics, or traditional business intelligence.
 
@@ -45,6 +47,7 @@ Primary Responsibilities:
 * Support retrieval and embedding systems by building and maintaining vector databases for semantic search, implementing embedding pipelines, and running batch jobs to embed and update large document collections.
 * Manage data lifecycle and quality by versioning datasets for fine-tuning, enforcing data quality and governance, and implementing feedback loops that capture user interactions for continuous improvement.
 
+Data Engineers typically use LakeFlow Connect to ingest data from diverse sources, LakeFlow Pipelines to orchestrate transformations, Unity Catalog for governance, and manage Vector Search indexes for the RAG pipelines.
 
 #### Software Engineer {.unnumbered}
 A software engineer integrates the agent system into a larger application, making AI capabilities accessible for end users. Common end-user interfaces include bot integrations with Slack and Microsoft Teams, summary analysis reports delivered to an inbox daily, or standalone chat interfaces. 
@@ -57,6 +60,7 @@ Primary Responsibilities:
 * Develop backend services that integrate GenAI capabilities into existing core business applications
 * Implement application-level error handling and user-friendly fallback experiences, ensuring the application remains functional even when AI services are unavailable or produce unexpected results
 
+Software Engineers commonly integrate with SQL Warehouses for application queries, REST APIs for AI services, and deploy user interfaces through Databricks Apps.
 
 #### AI Platform Engineer {.unnumbered}
 
@@ -76,6 +80,7 @@ Primary Responsibilities:
 * Set up alerting for cost overruns and system failures
 * Manage API keys, quotas, and provider relationships
 
+Platform Engineers rely on AI Gateway for managing LLM access and rate limiting, System Tables for monitoring usage, Budget Tags for cost allocation, and Workflows for pipeline orchestration.
 
 #### Subject Matter Expert (SME) {.unnumbered}
 
@@ -91,6 +96,8 @@ Primary Responsibilities:
 * Define domain specific quality criteria and acceptance thresholds  
 * Bridge communication between technical teams and business stakeholders, translating complex requirements into actionable specifications  
 * Ensure GenAI solutions comply with industry regulations and standards, a critical responsibility in regulated industries like healthcare and finance  
+
+SMEs often use the Review App to provide feedback and label datasets for evaluation, the Judge Calibration tool to align evaluation criteria across reviewers, and AI Playground to validate model outputs in collaborative sessions.
 
 ### Leadership and Strategy Roles
 
@@ -112,6 +119,8 @@ Primary Responsibilities:
 * Conduct competitive analysis of AI features in the market
 * Define acceptable accuracy thresholds and quality standards for AI outputs, establishing clear criteria for production readiness
 
+Product Managers typically use Dashboards to track AI metrics, System Tables to analyze usage patterns, and AI Playground to demonstrate capabilities to stakeholders.
+
 #### Executive Sponsor {.unnumbered}
 
 An Executive Sponsor champions AI transformation at the organizational level, securing resources, removing barriers, and ensuring AI initiatives align with strategic business objectives.
@@ -127,6 +136,8 @@ Primary Responsibilities:
 * Drive organizational change management for AI adoption, addressing both enthusiasm and resistance within the workforce
 * Set strategic direction for AI investment and risk tolerance
 * Ensure AI initiatives align with business strategy and compliance requirements 
+
+Executive Sponsors typically monitor progress through executive Dashboards for ROI tracking.
 
 ### Emerging Specialized Roles
 

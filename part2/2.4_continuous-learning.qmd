@@ -55,6 +55,29 @@ They also capture 70-80% of the architectural decisions upfront, leaving teams t
 ## Industry / enterprise-specific agentic design patterns
 
 Reference architectures are useful for outlining how different components of a technology stack integrate with each other. But it's also useful to have shared blueprints that drill down specifically into how agents themselves should be designed. 
+## Collaborative Metric Development and LLM-as-a-Judge Calibration
+
+One of the most critical challenges in AgentOps is establishing effective evaluation criteria. Unlike traditional software and machine learning where success metrics are often clear-cut, evaluating agentic AI requires synthesizing knowledge scattered across different departments—from technical teams who understand system capabilities, to business leaders who own outcomes, to Subject Matter Experts (SMEs) who define quality in domain-specific contexts.
+
+Without this unified view, teams struggle with ambiguous success criteria and waste effort measuring against disparate, unwritten standards. It isn't possible to calibrate an automated judge if the success metric itself is not clear.
+
+### Building Shared Understanding Through Cross-Functional Collaboration
+
+When a technical lead, a domain expert, and a product manager review the same customer service response, they often disagree on what makes it "good" or "bad"—and that disagreement is exactly what you need to surface and resolve.
+
+Start by gathering concrete examples of your agent's outputs, ideally covering the range of scenarios you expect in production. Bring together representatives from each stakeholder group and work through these examples systematically. The technical team might focus on whether the agent used tools correctly, while the domain expert cares about accuracy and the product manager evaluates user experience.
+
+These sessions reveal the gaps between what different groups consider success. A response that's technically correct might still frustrate users if it's too verbose. An answer that delights users might concern compliance teams if it makes claims beyond the agent's knowledge base.
+
+The goal isn't to eliminate these different perspectives but to make them explicit and find ways to measure all the dimensions that matter. This usually means developing multiple evaluation criteria rather than trying to find a single "quality score."
+
+Once you've established shared criteria through human review, you can scale the evaluation using LLM judges trained on your team's collective understanding. These judges won't replace human oversight entirely, but they can handle the bulk of routine evaluation while flagging edge cases for human review.
+
+At Databricks, we've developed a research-backed workshop to help teams navigate this process more efficiently. Our GenAI specialists guide cross-functional teams through the discovery process using custom applications designed to streamline the collaborative review and automated judge calibration.
+
+This workshop is designed to solve that problem by bringing technical, business, and SME stakeholders together. By collectively reviewing concrete examples of agent responses—a process we call the Discovery Phase—your group will create a single, shared definition of what constitutes a "good" versus a "bad" response. This crucial collaboration allows us to define exactly WHAT we want to measure and translate your team's collective qualitative expertise into a quantitative framework for success. The ultimate outcome is not just an agreed-upon rubric, but a calibrated LLM-as-a-Judge that automatically scales this shared knowledge to reliably evaluate all future agent performance, saving countless hours and ensuring your AI is measured against metrics that truly matter to your business.
+
+## Business stakeholder education
 
 The reason for this is that, although the consensus is that generative AI has the potential to automate and enhance workflows across industries, the details of how we should tailor agent design to the particularities of an industry remains vague.Teams often have to learn as they develop. This hard-won knowledge should be shared as design patterns that can be adopted across an enterprise so teams do not have to reinvent the wheel. 
 

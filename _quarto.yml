@@ -17,6 +17,7 @@ book:
         - part1/reference-architecture.qmd
         - part1/deployment-pipeline.qmd
         - part1/1.3_deployment-pipeline.qmd
+        - part1/agentops-project-pipeline.qmd
     
     - part: "Part 2: Principles of Agent Ops"
       chapters:

@@ -32,7 +32,7 @@ Primary Responsibilities:
 * Optimize agent design for cost and performance. Commonly used techniques include using prompt optimization, model selection, smart workflow designs that minimize API calls and response formatting that reduces token consumption
 * Deploy AI agents into production with proper versioning and monitoring
 
-AI Engineers often leverage Model Serving for deployment, MLflow for experiment tracking, Vector Search for RAG implementations, and AI Playground for rapid prototyping and testing.
+AI Engineers often leverage Mosaic AI Model Serving for deployment, MLflow for experiment tracking, Mosaic AI Vector Search for RAG implementations, and AI Playground for rapid prototyping and testing.
 
 #### Data Engineer {.unnumbered}
 GenAI Data Engineers support all data needs for AI applications. They're the bridge between raw data sources and AI systems, whether that's for RAG pipelines, AI agents, fine-tuning, analytics, or traditional business intelligence.

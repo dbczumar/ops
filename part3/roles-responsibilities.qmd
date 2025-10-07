@@ -2,13 +2,190 @@
 
 ## Introduction
 
-Defining team structures and responsibilities for agent operations.
+The emergence of AgentOps represents a fundamental shift in how organizations structure and manage AI-powered systems. It introduces the need for new roles, collaborative patterns, and operational frameworks to handle the non-deterministic behaviors of AI agents and multi-agent interactions. This evolution requires both role specialization and cross-functional collaboration.
+In this section, we will explore key roles and responsibilities within GenAI projects, examining how traditional positions are evolving and what new patterns of collaboration are emerging.
 
-## Key Roles
+## The Evolution of Roles in the GenAI Era
 
-- Agent Engineers
-- MLOps Engineers
-- Data Scientists
-- Platform Engineers
+This shift has fundamentally changed the skills required from workers and created new career paths from them.
 
-*Content to be developed*
+In many cases, traditional data scientists who once focused on statistical modeling are transitioning to AI Engineers, applying their understanding of model behavior to prompt engineering and agent design. MLOps engineers are evolving into specialists who manage the unique challenges of LLM deployments. Data engineers are expanding their expertise to include vector databases and embedding pipelines.
+
+The key roles listed below reflect this evolution, showing how organizations are adapting their talent strategies for GenAI implementation. Because GenAI work requires significant collaboration, the exact division of responsibilities often depends on the organization's size. In some cases, one person may take on several roles, or hold a hybrid position that combines responsibilities from different areas.
+
+### Technical Roles
+
+These roles directly build, implement, and maintain AI systems, handling the hands on technical work and domain expertise required to deliver AI solutions. The technical landscape has shifted dramatically, with teams moving from months of model training to a focus on integration, optimization, and ensuring reliable agent behavior.
+
+#### AI Engineer {.unnumbered}
+An AI Engineer integrates and optimizes pre-trained AI models into production applications, focusing on making AI capabilities work reliably and cost-effectively within business systems rather than building models from scratch.
+
+Many of today's AI Engineers come from diverse backgrounds: software engineers bring system design and production expertise, data scientists contribute their understanding of model behavior and evaluation, while ML engineers naturally transition their model deployment skills to the LLM era. This diversity is essential because AI Engineers must understand both the probabilistic nature of AI models and the deterministic requirements of production systems.
+
+Primary Responsibilities:
+
+* Integrate and fine-tune existing LLMs with business logic and data sources, typically using APIs to pre-trained models
+* Develop tools that give AI agents access to APIs and proprietary and external data sources
+* Design and implement the agent behavior
+* Build evaluation and testing suits to ensure quality
+* Refine performance based on output of evaluation suits and SME feedback
+* Optimize agent design for cost and performance. Commonly used techniques include using prompt optimization, model selection, smart workflow designs that minimize API calls and response formatting that reduces token consumption
+* Deploy AI agents into production with proper versioning and monitoring
+
+AI Engineers often leverage Mosaic AI Model Serving for deployment, MLflow for experiment tracking, Mosaic AI Vector Search for RAG implementations, and AI Playground for rapid prototyping and testing.
+
+#### Data Engineer {.unnumbered}
+GenAI Data Engineers support all data needs for AI applications. They're the bridge between raw data sources and AI systems, whether that's for RAG pipelines, AI agents, fine-tuning, analytics, or traditional business intelligence.
+
+Traditional data engineers are rapidly acquiring new skills in vector databases, embedding models, and unstructured data processing. The shift from structured SQL databases to semantic search has required a fundamental rethinking of data architecture. 
+
+Primary Responsibilities:
+
+* Design and maintain structured data pipelines that connect business-level data (e.g., customer records, product catalogs, transactions) with AI workflows. These pipelines typically involve extracting data from source systems into schemas customized for a use case, validating data quality and sanitizing data to remove sensitive information
+* Build pipelines for unstructured documents such as PDFs, emails, and reports, using OCR and text extraction, metadata tagging, text cleaning, chunking large documents and conversion into structured formats (e.g. JSON).
+* Develop preprocessing workflows for multimodal data (images, audio, video), including resizing images, extracting features, transcribing audio, segmenting videos, generating metadata and storing the outputs.
+* Support retrieval and embedding systems by building and maintaining vector databases for semantic search, implementing embedding pipelines, and running batch jobs to embed and update large document collections.
+* Manage data lifecycle and quality by versioning datasets for fine-tuning, enforcing data quality and governance, and implementing feedback loops that capture user interactions for continuous improvement.
+
+Data Engineers typically use LakeFlow Connect to ingest data from diverse sources, LakeFlow Pipelines to orchestrate transformations, Unity Catalog for governance, and manage Vector Search indexes for the RAG pipelines.
+
+#### Software Engineer {.unnumbered}
+A software engineer integrates the agent system into a larger application, making AI capabilities accessible for end users. Common end-user interfaces include bot integrations with Slack and Microsoft Teams, summary analysis reports delivered to an inbox daily, or standalone chat interfaces. 
+
+Software engineers working with GenAI have had to adapt to non-deterministic systems. They've developed new patterns for handling variable response times, streaming outputs, and graceful degradation when AI services fail.
+
+Primary Responsibilities:
+
+* Design and building the user interface elements that make interactions with the GenAI solution smooth and intuitive, including real-time response streaming, typing indicators, and feedback tools, and conversation management
+* Develop backend services that integrate GenAI capabilities into existing core business applications
+* Implement application-level error handling and user-friendly fallback experiences, ensuring the application remains functional even when AI services are unavailable or produce unexpected results
+
+Software Engineers commonly integrate with SQL Warehouses for application queries, REST APIs for AI services, and deploy user interfaces through Databricks Apps.
+
+#### AI Platform Engineer {.unnumbered}
+
+A Gen  AI Platform Engineer provides scalable, cost-controlled infrastructure that enables AI applications to run reliably in production.
+
+Platform engineers have had to rapidly adapt to the unique challenges of AI infrastructure. Unlike traditional applications where resource usage is predictable, AI workloads can vary dramatically based on prompt length, model selection, and user behavior.
+
+Primary Responsibilities:
+
+* Provision and scale the infrastructure that supports GenAI services and applications
+* Build observability for GenAI systems (token usage monitoring, latency tracking, error rates)
+* Manage API gateway configurations and load balancing across providers
+* Handle multi-cloud orchestration and resource allocation
+* Create CI/CD pipelines for GenAI application deployments
+* Implement cost optimization strategies (caching layers, rate limiting, usage caps)
+* Monitor and optimize infrastructure costs and performance
+* Set up alerting for cost overruns and system failures
+* Manage API keys, quotas, and provider relationships
+
+Platform Engineers rely on AI Gateway for managing LLM access and rate limiting, System Tables for monitoring usage, Budget Tags for cost allocation, and Workflows for pipeline orchestration.
+
+#### Subject Matter Expert (SME) {.unnumbered}
+
+A Subject Matter Expert brings deep domain knowledge to ensure AI solutions accurately address real business problems and comply with industry specific requirements.
+
+SMEs have become increasingly critical as organizations realize that genAI solutions need substantial domain expertise to be useful. Unlike the ML era where SMEs primarily provided training data, they now actively participate in output validation and continuous improvement cycles.
+
+Primary Responsibilities:
+
+* Validate GenAI solution outputs for domain accuracy and relevance, catching subtle errors that automated testing might miss  
+* Identify high value use cases specific to the business domain, prioritizing AI applications that deliver real business value  
+* Provide training data examples and feedback that is used to improve agent quality
+* Define domain specific quality criteria and acceptance thresholds  
+* Bridge communication between technical teams and business stakeholders, translating complex requirements into actionable specifications  
+* Ensure GenAI solutions comply with industry regulations and standards, a critical responsibility in regulated industries like healthcare and finance  
+
+SMEs often use the Review App to provide feedback and label datasets for evaluation, the Judge Calibration tool to align evaluation criteria across reviewers, and AI Playground to validate model outputs in collaborative sessions.
+
+### Leadership and Strategy Roles
+
+The strategic importance of GenAI has elevated these roles to new prominence. Unlike traditional IT projects that might report through middle management, GenAI initiatives often have direct C-suite visibility due to the high risks involved from significant financial investments and potential regulatory violations to reputational damage from AI failures. This combination of high stakes and executive scrutiny fundamentally changes how these roles operate, requiring leaders who can navigate both technical complexity and boardroom politics.
+
+#### Product Manager {.unnumbered}
+
+A GenAI Product Manager bridges business needs and technical capabilities, defining the strategy and roadmap for AI-powered products while ensuring they deliver measurable value to users and the organization.
+
+Product managers in the GenAI era face the challenges of managing stakeholder expectations about non-deterministic systems, balancing innovation with risk, and navigating rapidly evolving capabilities. This role has become more technical, requiring deeper understanding of model capabilities and limitations. The pace of change means roadmaps are revised monthly rather than quarterly, and competitive analysis has become a daily activity as new AI features appear constantly.
+
+Primary Responsibilities:
+
+* Identify and prioritize AI use cases based on business value and technical feasibility
+* Define success metrics for AI features (user engagement, cost per interaction, value delivered)
+* Balance AI capabilities with user experience and ethical considerations, ensuring that AI enhances rather than complicates user journeys
+* Manage stakeholder expectations about AI limitations and non-deterministic behavior, educating leadership about what AI can and cannot do
+* Create product roadmaps that leverage emerging AI capabilities while maintaining stability for users
+* Conduct competitive analysis of AI features in the market
+* Define acceptable accuracy thresholds and quality standards for AI outputs, establishing clear criteria for production readiness
+
+Product Managers typically use Dashboards to track AI metrics, System Tables to analyze usage patterns, and AI Playground to demonstrate capabilities to stakeholders.
+
+#### Executive Sponsor {.unnumbered}
+
+An Executive Sponsor champions AI transformation at the organizational level, securing resources, removing barriers, and ensuring AI initiatives align with strategic business objectives.
+
+Executive sponsors have become significantly more prominent compared to the classical ML era. GenAI projects typically have C-suite visibility from day one, meaning that managing expectations and communicating progress is now much more important and high-stakes. They need to balance extraordinary market pressure to adopt AI with legitimate concerns about risk, cost, and organizational readiness. 
+
+Primary Responsibilities:
+
+* Champion AI adoption and cultural transformation across the organization
+* Allocate budget for AI infrastructure, tools, and talent
+* Establish AI governance frameworks and ethical guidelines
+* Manage board and stakeholder communications about AI initiatives, translating technical progress into business impact
+* Drive organizational change management for AI adoption, addressing both enthusiasm and resistance within the workforce
+* Set strategic direction for AI investment and risk tolerance
+* Ensure AI initiatives align with business strategy and compliance requirements 
+
+Executive Sponsors typically monitor progress through executive Dashboards for ROI tracking.
+
+### Emerging Specialized Roles
+
+As AI solutions become more complex and mission critical, a number of specialized roles are beginning to appear (e.g. AI ethicist, prompt engineer, AI safety engineer). In many organizations today, however, these responsibilities remain distributed across existing teams (e.g. data, security, compliance) rather than being established as separate positions. Below is how these specializations are often handled in practice.
+
+#### AI Ethics Officer {.unnumbered}
+
+An AI Ethics Officer is responsible for establishing and enforcing governance frameworks that ensure AI systems are developed and deployed responsibly, balancing innovation with ethical principles and regulatory compliance. This includes addressing issues such as fairness, transparency, accountability, and the broader social impacts of AI adoption.
+
+At present, these responsibilities are most often distributed across compliance officers (regulatory alignment), data governance teams (fairness and bias mitigation), and product or research leaders (responsible design and deployment). However, with the growing complexity of AI systems and the rise of formal regulations like the [EU AI Act](https://artificialintelligenceact.eu/the-act/), the need for a dedicated role is becoming increasingly clear. As a result, the AI Ethics Officer is emerging as a specialised function in larger organisations and regulated industries.
+
+#### AI Safety Engineer {.unnumbered}
+
+As organizations deploy AI in more sensitive and mission-critical contexts, safety concerns extend far beyond traditional cybersecurity. An AI Safety Engineer focuses on implementing safeguards against adversarial attacks, harmful outputs, and failure modes unique to AI systems. In practice, however, most companies do not employ this as a dedicated role. Instead, AI engineers are usually responsible for adding basic guardrails, security teams monitor risks like prompt injection and data leakage, and platform engineers watch for anomalies at the infrastructure level. Dedicated AI Safety Engineers are found primarily at AI research labs and large technology firms, where safety is central to product viability and public trust.
+
+#### LLMOps Engineer {.unnumbered}
+
+An LLMOps Engineer specializes in the operational complexities of large language models, including prompt versioning, token optimization, and multi-model routing. For most organizations today, these tasks are divided among AI engineers, who manage prompts and model selection, and platform engineers, who oversee infrastructure and monitoring. The role of LLMOps Engineer typically emerges in organizations with dozens of AI applications in production, where efficiency gains from specialization outweigh the overhead of another dedicated position.
+
+#### Prompt Engineer {.unnumbered}
+
+A Prompt Engineer translates business requirements into optimized instructions for AI models, systematically testing and refining prompts to improve accuracy while reducing costs. Today, these responsibilities are typically handled by AI Engineers who perform most prompt engineering, with input from SMEs for domain-specific language and Product Managers for user experience considerations. Dedicated prompt engineers are rare outside of AI-first companies.
+
+## Collaboration Patterns and Emerging Trends
+
+Effective GenAI projects depend on strong cross-functional collaboration, with roles working together to align technical, operational, and business needs. Common collaboration patterns and trends are:
+
+#### Cross-functional teams {.unnumbered}
+
+Agent implementation teams bring together AI Engineers, Data Engineers, and Platform Engineers in tight collaboration. Unlike traditional development where these roles might interact through tickets and handoffs, GenAI teams often work in the same physical or virtual space, making real-time decisions about architecture, cost trade-offs, and performance optimization. The complexity of RAG pipelines and agent behaviors requires constant coordination that can't be achieved through traditional organizational boundaries.
+
+#### Continuous stakeholder engagement  {.unnumbered}
+
+Product development chains now operate in much tighter cycles. Where traditional development might have monthly stakeholder reviews, GenAI teams often demonstrate progress weekly or even daily. Product Managers, AI Engineers, and Software Engineers maintain constant communication channels, with many teams adopting "office hours" where stakeholders can see live demonstrations and provide immediate feedback.
+
+#### Continous feedback loop  {.unnumbered}
+
+Unlike traditional software where user feedback might be collected through surveys or support tickets, GenAI systems enable continuous learning through every interaction. This has created new collaboration patterns where:
+
+* Data Engineers build real-time feedback pipelines
+* AI Engineers analyze interaction patterns to improve agents
+* SMEs review edge cases and failure modes
+* Product Managers adjust features based on immediate usage data
+
+#### Governance as a core function  {.unnumbered}
+
+AI governance boards have evolved from quarterly review committees to active participants in the development process. The combination of AI Ethics Officers, AI Safety Engineers, and Legal/Compliance teams now provides continuous oversight rather than gate based reviews. 
+
+#### Cost Management Team  {.unnumbered}
+
+As generative AI systems scale, costs can spiral quickly if left unchecked. A dedicated cost management team brings together finance, platform engineers, and AI engineers to keep usage and infrastructure spending under control. This group monitors resource consumption, tracks ROI, and ensures that budgets remain aligned with business priorities while still enabling innovation.

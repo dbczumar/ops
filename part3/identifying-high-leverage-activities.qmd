@@ -1,0 +1,336 @@
+# Prioritizing high-leverage activities
+
+## Introduction: What to focus on first? 
+
+Our customers are never short on ideas for how generative AI can improve their company's processes. Indeed, some customer's backlog run up to hundreds of use cases. But they do frequently ask, "what should I focus on first when developing my agent?"
+
+This question is not surprising. Agentic workflows are an order of magnitude more complex than the linear RAG chains that were the main focus of 2024. While a basic RAG pipelines may include a predictable set of steps such as retrieval and generation, agentic workflows more open-ended and less well-scoped. They usually involve open-ended reasoning, dynamic tool selection, and automation of intricate multi-step business workflows.
+
+Take insurance claims processing as an example. An insurance claim can go through multiple rounds of asking for evidence for a claim, verifying that evidence, and asking the customer for more information. 
+
+In another example, a telco customer support agent that investigates an unexpectedly high bill charge may need to first identify the cause of the anomaly, and then wait for a human to approve a refund. 
+
+To address this complexity, we've identified a repeatable sequence of planning activities that we've found to be important for mapping out our problem space and for aligning stakeholders. Focus on these key areas at the start of a project, and the project's chances of success increase greatly. 
+
+These activities can be implemented as part of *design sprint*. Design sprints are time-boxed collaborative workshops that bring together cross-functional teams to rapidly prototype and validate solutions before committing significant development resources. Originally popularized by Google Ventures, design sprints compress months of traditional planning into an intensive, focused period where teams can align on design decisions, identify key data sources and plan evaluation suites before diving into the complex technical implementation.
+
+## Key planning activities to prioritize
+
+### Suggested planning sequence
+
+1. Map out in detail the current workflow as it is executed by humans
+2. Translate the business workflow mapped in step 1 into a technical architecture covering:
+    - the required structured and unstructured data sources
+    - which aspects of the workflow should be handled by tool-calling sub-agents or by linear workflows 
+    - how each sub-component should be evaluated for quality  
+3. List out the observability requirements that different stakeholders, from C-level executives to business users to developers need from the agentic application
+4. Design tracing and logging modules addressing the needs listed in step 3. Tracing and logging can be use default sensible defaults such as those offered by `mlflow.autolog()` to begin with, and then customized further later. 
+5. Map the access controls each agent and final end-user requires.  
+6. Future planning: identify components that other projects can reuse and build abstractions accordingly
+
+To make these steps more concrete, we will go through a worked example of a customer support agent designed to handle customer queries sent to a telecommunications company
+
+## Worked example: Telecommunications Customer Support Agent
+
+### 1. Business process mapping
+
+In our example, support agents primarily respond to inbound customer calls, emails, live chats, and support tickets regarding service disruptions, billing questions, plan changes, and technical problems . They must quickly diagnose issues ranging from simple password resets to complex network connectivity problems. The diagram below shows the broad categories of questions an agent might receive as well as some example questions. Note also that some questions might span multiple categories, and multiple categories might also be addressed within a single customer call. 
+
+![high level workflow breakdown](./files/high-level-workflow-breakdown.png)
+
+Addressing a customer query is not always straightforward. As shown in the workflow below, when handling a question related to an unexpectedly high bill, an agent may have to iteratively work through a set of scenarios to identify a root cause. This workflow involves a combination of planning, taking action and evaluating the action's output before deciding on a next step, making it suitable to be handled by an agentic solution rather than a linear LLM workflow. 
+
+![billing-specific workflow breakdown](./files/billing-query-workflow.png)
+
+### 2. Translating business process into a technical architecture
+
+From mapping out how human customer support agents manage their responsibilities, we understand that they commonly need to address queries around four broad areas: account, billing, products and technical support. 
+
+Although a single human can easily mentally classify and handle customer queries across all these areas, agents are different. We want to ensure what each agent has a defined set of responsibilities and toolset. By designing for modularity, we can better construct prompts, tools and evaluations. 
+
+Therefore, we decide on having one sub-agent per query category, with a supervisor agent being responsible for routing questions between agents. We do not expect sub-agents to communicate with each other, which simplifies our setup and reduces protential sources of indeterminism. 
+
+**Multi-agent high-level architecture**
+
+![Multi-agent example architecture](./files/telco-multi-agent-example.png)
+
+| Agent | Primary Role | Description |
+|-------|-------------|-------------|
+| **Supervisor Agent** | Workflow Orchestration | Orchestrates the workflow, routes queries to specialized agents, generates responses. Conducts query intent classification, sentiment analysis, and extracts attributes for routing decisions |
+| **Account Agent** | Customer Profile Management | Handles customer profile and subscription queries |
+| **Billing Agent** | Financial Services | Processes billing, payment, and usage-related queries |
+| **Tech Support Agent** | Technical Assistance | Provides troubleshooting and technical support |
+| **Product Agent** | Product Information | Manages queries about plans, devices, and promotions |
+
+Additionally, we should also map out the tools we can provide to the agent
+
+**Billing sub-agent setup**
+
+![Billing agent tools](./files/billing-agent-tools.png)
+
+### 3. Identify available data sources 
+
+Structured data sources
+
+| Data Source | Schema Summary |
+|-------------|----------------|
+| telco_customer_support_dev.bronze.customers | Customer profile data including customer_id, segment, location, registration_date, status, contact preferences, and scoring metrics (loyalty_tier, churn_risk_score, customer_value_score, satisfaction_score) |
+| telco_customer_support_dev.bronze.subscriptions | Subscription records linking customers to plans/devices with subscription_id, customer_id, plan_id, device_id, promo_id, dates, contract terms, charges, and status |
+| telco_customer_support_dev.bronze.plans | Service plan catalog containing plan_id, name, type, pricing, data limits, feature flags (unlimited calls/texts), contract requirements, and descriptions |
+| telco_customer_support_dev.bronze.devices | Device catalog with device_id, name, manufacturer, type, pricing (retail/installment), specifications (storage, 5G compatibility), colors, and availability status |
+| telco_customer_support_dev.bronze.promotions | Promotional offers including promo_id, name, discount details (type/value), date ranges, descriptions, and active status |
+| telco_customer_support_dev.bronze.billing | Billing records with billing_id, customer/subscription references, dates, charge breakdowns (base, additional, tax), payment information, and status |
+| telco_customer_support_dev.bronze.usage | Usage metrics containing usage_id, subscription_id, daily usage data (data_usage_mb, voice_minutes, sms_count), and billing cycle information |
+
+
+Unstructured data sources 
+
+| Table | Unstructured Content |
+----------|-------------------------------|
+| telco_customer_support_dev.bronze.knowledge_base | Full content stored as markdown text including FAQs, policies, guides, and procedures |
+| telco_customer_support_dev.bronze.support_tickets | Free-text issue descriptions from customers |
+| telco_customer_support_dev.bronze.support_tickets | Free-text resolution details from support agents |
+
+**Evaluation** 
+
+The business workflows that enterprises want to automate with agents can be complex, with branches, conditional fields and human-in-the-loop-checks needed. At the start of a project, rather than build an agentic workflow that covers the entire business process in one go, teams will define a "thin slice", or simplified version of the workflow that is just complex enough to visualise how data will flow through the workflow.
+
+Then, for each substep within the workflow, the expected inputs and outputs are defined. What makes a "high quality" response is easier define if outputs are structured JSON or binary true / false judgements. Structuring outputs in this way simplifies evaluation because established metrics such as F1 scores can be used. As far as possible, structured responses should be prioritised over free text responses.  
+
+There may be unstructured fields, such as incident summaries and insurance claim notes, developing automated LLM judges aligned with the business domain is important, and something we cover in Part 2.3 Feedback Principles.
+
+During development, the go-to person for judging "quality" is someone who can understand both the business use case and the technical aspects. We've seen various personas take on this role, from product managers, scrum masters, data scientists attached to the business department, or technically savvy business users.
+
+
+### Customizing observability reports and dashboards based on personas 
+
+In the chapter 2.3 The principle of feedback, we discussed how developers can use [MLflow Tracing](https://mlflow.org/docs/3.3.2/genai/tracing/app-instrumentation/), [MLflow Assessments](https://mlflow.org/blog/mlflow-assessment-ui) and the [MLflow Feedback API](https://mlflow.org/docs/3.3.2/genai/tracing/collect-user-feedback/) to collect data on our agentic system's quality. In this section, expand on the concept of observability beyond the developer. We cover how traces and feedback can be used to provide different stakeholders with a view on how the agent is functioning, in a way that addresses what they care about. 
+
+Below are some examples of stakeholders, their priorities and the resulting interfaces, built on a foundation of data collected from MLflow Traces and the Feedback API
+
+
+**Persona #1: Business subject-matter-experts (SMEs) from the customer support department**
+
+Priorities:
+
+- transparency into agent chain-of-thought reasoning, tool-calling and decision making 
+- ability to provide feedback in order to troubleshoot problematic steps in a workflow
+- ability to have an overview of overall agent performance without looking at individual traces
+
+**Business SME and developer user interface**
+
+- in addition to the conversation UI, include side panel showing MLflow Trace outlining agent reasoning, tool-calling and response generation steps
+
+![business SME view](./files/data-int-on.png)
+
+- interface for giving feedback on response quality. Text inputs are recorded as MLflow Assessments on the backend and attached to traces. Assessments and traces are then viewable by a developer from the MLflow Experiments page in a Databricks workspace.
+
+![UI labelling session](./files/feedback.png)
+
+![MLflow Experiment reflecting feedback from an SME labelling session ](./files/mlflow-label-session.png)
+
+- interface for customizing MLflow label schemas to a specific use case
+![Assessments](./files/label-schemas.png)
+
+- overall report, refreshed periodically, summarising key metrics 
+![Summary report](./files/summary-analysis-report.png){width=300}]
+
+Raw MLflow traces are granular and information-dense. Because traces can be synced to a Delta table, developers can process raw traces to produce summaries and reports that are digestible by a non-technical audience. 
+
+Additionally, although not business SMEs may not be provided user access to a Databricks workspace and the MLflow Experiments UI, hosting a feedback UI on Databricks Apps, and making the app accessible via Databricks One (a Databricks interface specifically for business users), SMEs can be productively involved and informed throughout the AI agent development process.  
+
+**Persona #2: Executive sponsor**
+
+Priorities:
+
+- Return on invesment, often tracked through metrics like automation rate, productivity gains, cost reductions, or revenue impact, and rapid time-to-value.
+- Agent response quality
+- Risk and compliance
+
+**Executive sponsor view**
+
+- ROI dashboard based on aggregated metrics from Delta tables
+![business-kpis](./files/business-kpis.png)
+
+**Customer Priorities **
+
+- Fast resolution of issue / questions
+- High response reliability
+- Ability to escalate issues to a human agent if needed
+- Strong data privacy and security guarantees
+
+**Customer UI view**
+
+Databricks Apps flexible app-hosting solution that allows prototyped apps to be quickly deployed for testing. 
+
+Here is a prototype sample UI might include:
+
+- pre-set cards for commonly-asked questions
+- cited sources for reliability
+- ability to provide quick feedback on the response quality through like / dislike buttons. These feedback actions can be tied by to the specific customer trace through the `mlflow.log_feedback()` API endpoint hosted on a FastAPI backend 
+
+![end-user-view](./files/data-int-off.png)
+
+### Designing test suites 
+#### Using top-down and bottom-up approaches together
+
+As we design our multi-agent workflow, certain aspects of the design will make it clear what evaluations we may need. For example, a billing agent would need a tool to query a table for customer spend therefore, we should create a test that ensures that this tool works correctly. This is an evaluation that can be identified upfront without analyzing any traces. 
+
+At the same time, certain failure modes only become evident after a bottoms-up analysis of LLM inputs or outputs. For example, an LLM step to generate SQL that queries a database table may mix up different product acronyms. For these failure modes, we have to conduct an analysis 
+
+Here, we outline some potential ways to get started with both top-down and bottom-up evaluation suite design in order to setup a project for success. 
+
+**Top-down approach** 
+
+Generate various customer personas and scenarios, have an LLM create sample queries 
+
+```
+    "billing": {
+        "contexts": [
+            QueryContext("billing", True, True, "concerned customer", "bill inquiry"),
+            QueryContext("billing", True, True, "budget-conscious customer", "payment planning"),
+            QueryContext("billing", True, True, "traveling customer", "roaming charges"),
+            ],
+        "base_scenarios": [
+            "customer sees unexpected charges on their bill",
+            "customer wants to know when payment is due",
+            "customer needs breakdown of current month charges",
+            "customer is questioning data usage amounts",
+        ]
+    },
+```    
+**Bottoms-up approach**
+
+A more bottoms-up approach, where we conduct error analysis based on sample traces, then align LLM judge outputs with SME feedback to create automated tests, is outlined in more detail in chapter 2.2. Here, we move beyond a purely developer-focused way of constructing bottoms-up evaluation to explore how to also gather analysis and feedback from non-developer stakeholders through an in-person workshop format.
+
+This exercise is best down in a workshop format with SMEs, developers and other stakeholders This is
+
+TODO: Align with Pallavi and Jonathan to include this section here based on workshops they did with customers
+
+Most judge builders on the market need to assume that teams a) know what to judge and b) how to collect quality data. While this is true for many customers, there are also many for whom it is not. 
+
+This workshop additionally provides:
+- Guided error analysis to identify what judges are high value
+- Proven methodology for collecting high-quality data
+- Tools for annotation, IRR computation, and disagreement resolution
+- Compatibility with MLflow traces
+- This gives teams Surge/Scale/SuperAnnotate-style capabilities in-house, with their SMEs, for a fraction of the time and cost. They can then take these gold labels to our Judge Builder Product for auto-optimization.
+
+##### Workshop outline 
+
+##### Workshop outcomes
+
+### Future planning: identify components that other projects can reuse and build abstractions accordingly
+
+The organizations we work have long use-case backlogs. They need a system for reliably developing and deploying not a few, but tens, sometimes hundreds of Generative AI use cases. Moreover, these use caes are distributed across multiple development teams spread across different departments. 
+
+In this organization setup, shared abstractions and reusable helper modules standardize how applications are developed and ensure that teams conform to best practices, especially around security, data privacy and evaluations. 
+
+Below are some examples of shared abstractions that teams can use. These examples are available also from the ![Databricks Solutions Github repository](https://github.com/databricks-solutions). 
+
+#### Example 1: Base Agent class
+
+In this example, a base agent class sets out some standard interfaces that all agents should implement: 
+
+- a uniform way of specifying Unity Catalog assets through a `UCConfig` class
+- a common way of easily initializing an agent through specifying a name as a string, which then calls the relevant configuration file
+- although not included here, a base agent class could also include class methods for initializing machine-to-machine authentication through the Databricks Workspace Client
+
+```
+class BaseAgent(ResponsesAgent, abc.ABC):
+    """Base agent class all agents inherit from."""
+
+    _config_cache: dict[str, AgentConfig] = {}
+
+    def __init__(
+        self,
+        agent_type: str,
+        llm_endpoint: Optional[str] = None,
+        tools: Optional[list[dict]] = None,  # UC function tools
+        vector_search_tools: Optional[
+            dict[str, Any]
+        ] = None,  # Map of tool name -> VectorSearchRetrieverTool (not UC function)
+        system_prompt: Optional[str] = None,
+        config_dir: Optional[Path | str] = None,
+        inject_tool_args: Optional[list[str]] = None,
+        disable_tools: Optional[list[str]] = None,
+        uc_config: Optional[UCConfig] = None,
+    ):
+        """Initialize base agent from config file.
+
+        Args:
+            agent_type: Type of agent (used for config loading)
+            llm_endpoint: Optional override for LLM endpoint
+            tools: Optional list of UC function tools
+            vector_search_tools: Optional dict mapping tool names to VectorSearchRetrieverTool objects
+            system_prompt: Optional override for system prompt
+            config_dir: Optional directory for config files
+            inject_tool_args: Optional list of additional tool arguments to be injected into tool calls from custom_inputs.
+            disable_tools: Optional list of tool names to disable. Can be simple names or full UC function names.
+            uc_config: Optional UC configuration for Unity Catalog resources
+        """
+```
+
+#### Example 2: Base class for evaluation scorers 
+
+MLflow has many options for creating evaluation scorers. Teams new to agent development may not be familiar with how to select the right evaluation APIs for their use case. The ![`make_judge`](https://mlflow.org/docs/3.4.0/genai/eval-monitor/scorers/llm-judge/make-judge/) API for MLflow is a unified interface for all types of judge-based evaluation. Therefore, rather than spend development cycles trialling different evaluation scorers, developers in an organization can benefit from starting with an opiniated wrapper around the `make_judge` API to get started quickly with evaluation. 
+
+```
+from abc import ABC, abstractmethod
+from typing import Any, Optional
+
+from mlflow.entities import Feedback, Trace
+from mlflow.genai.judges import custom_prompt_judge, meets_guidelines
+from mlflow.genai.scorers import scorer
+from mlflow.genai.scorers.builtin_scorers import BuiltInScorer
+
+
+class BaseScorer(ABC):
+    def __init__(self, name, sample_rate):
+        self.name = name
+        self.sample_rate = sample_rate
+
+    @abstractmethod
+    def get_make_judge_scorer(self):
+        """Implementation of LLM judge evaluation wrapping MLflow make_judge"""
+        pass
+```
+
+Example 3: MLflow CLI tool for common tasks
+
+Throughout development and evaluation, AI engineers across teams will use MLflow for a common set of tasks such as creating labelling sessions and generating evaluation reports. 
+
+One way to increase productivity is to provide a CLI wrapper for these common tasks. The benefit to this tool is twofold: developers can call these tools rather than create their own scripts, and these tools can also be provided to AI code agents such as Claude to speed up development. 
+
+Below is an example of having a Claude code prompt that leverages helper python scripts to setup a labelling session for business SMEs.
+
+```
+# Label Schemas Management
+
+Manage labeling schemas for your MLflow Review App. This command helps you view, create, modify, and delete schemas interactively.
+
+## Usage
+
+```bash
+/label-schemas [action]
+```
+
+## Actions
+
+### List Schemas (default)
+```bash
+/label-schemas
+```
+Shows all current labeling schemas in a beautiful format with details about each schema type, options, and instructions.
+
+**Context-Aware Suggestions**: When available, references experiment summaries from `experiments/[experiment_id]_summary.md` to suggest schemas tailored to your specific agent's capabilities and use cases.
+
+### Add New Schema
+```bash
+/label-schemas add [description]
+```
+
+Examples:
+- `/label-schemas add quality rating from 1 to 5`
+- `/label-schemas add helpfulness categorical with options: Very Helpful, Helpful, Not Helpful`
+- `/label-schemas add feedback text field for comments`

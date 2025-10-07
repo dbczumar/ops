@@ -8,54 +8,55 @@ As outlined in The DevOps Handbook, teams must decrease deployment time for chan
 ### Creating Quick Feedback Loops Through Systematic Test Suite Development
 Unit testing and integration testing in software engineering can usually be defined upfront because we have an idea of the behaviour of the system we want to build, including it's edge cases. Generative AI is different. Creating tests needs an additional preliminary step of  extensively analysing traces of previous requests and responses in order to identify common failures modes. Only when these failure modes are identified and categorised can we then defining automated checks to identify those failure patterns. 
 
-** Dangerous default** 
+**Dangerous default** 
 
 Teams often fall into a dangerous default pattern where one tester runs five to six queries repeatedly in a chat interface and provides pass/fail analysis. This approach fails to capture error frequency metrics or classify failure types systematically.
 
-Teams should instead apply the scientific method iteratively. 
+**Teams should instead apply the scientific method iteratively.**
 
 1. Start by categorizing failure modes as quickly as possible using approximately 100 traces. ([source](**Husain, H., & Shankar, S. (n.d.). Frequently Asked Questions (And Answers) about AI Evals – Hamel’s blog. Hamel’s Blog. https://hamel.dev/blog/posts/evals-faq/**)). These traces can be collected in a variety of ways:
-    1a: If an application is already in production, sample production traces. Make sure production traces are sufficiently diverse and cover a range of input categories, conversation lengths and types of tool calls
-    1b. If an application is still in development, work with an SME to define a set of inputs that they anticipate should cover the range of scenarios a workflow or subagent should cover. Because LLM calls are non-deterministic, each input should be run 3-4 times so we can measure response consistency. 
 
-2. Create failure reports using tools like MLflow or Jupyter notebooks with visualizations. ([methods](**Husain, H., & Shankar, S. (n.d.). Frequently Asked Questions (And Answers) about AI Evals – Hamel’s blog. Hamel’s Blog. https://hamel.dev/blog/posts/evals-faq/**))
+    - If an application is already in production, sample production traces. Make sure production traces are sufficiently diverse and cover a range of input categories, conversation lengths and types of tool calls
 
-It can be useful to start with failure reports that come readily available from existing evaluation frameworks. For example, the evaluations UI from an MLflow Experiment allows users to filter for traces that fail a specific assessment. These traces, along with the LLM judge rationale that led to the failed assessment, can be surfaced in a notebook or dashboard. 
+    - If an application is still in development, work with an SME to define a set of inputs that they anticipate should cover the range of scenarios a workflow or subagent should cover. Because LLM calls are non-deterministic, each input should be run 3-4 times so we can measure response consistency. 
 
-[failure-report-simple](./feedback-principles_files/failure-technical-report-03.png)
+2. Create failure reports using tools like MLflow or Jupyter notebooks with visualizations [1](**Husain, H., & Shankar, S. (n.d.). Frequently Asked Questions (And Answers) about AI Evals – Hamel’s blog. Hamel’s Blog. https://hamel.dev/blog/posts/evals-faq/**).
 
-Once developers understand their failure reporting requirements in more detail, customised reports can also be created. For example, a summary (possibly LLM-generated) of the most common types of agent requests received can be included 
+3. Gradually calibrate automated LLM judges metrics based on insights from step 2 and consultation with domain experts. (We will cover a basic workflow in more detail the following chapter - 2.3 Feedback Principles, using a worked example of a customer email generator). The output will be a set of scorers such as [MLflow Gen AI Scorers](https://mlflow.org/docs/latest/genai/concepts/scorers/) that can scale up trace evaluation in both development and production settings. 
 
-[failure-report-custom-01](./feedback-principles_files/failure-technical-report-01.png)
-
-A statistical summary of tool calls is another section that can be included 
-[failure-report-custom-02](./feedback-principles_files/failure-technical-report-02.png)
-
-3. Gradually calibrate automated LLM judges metrics through MLflow scorers and cross-checking with domain experts
-
-This is a large topic, and we cover the basic workflow chapter 2.3 Feedback Principles, using a worked example of a customer email generator
-
-4. Translate these offline scorers to run in an online setting on production traces. Usually, this involves collecting traces into an OLAP database such as Delta tables, and then running batch jobs to evaluate a sample of these production traces using the same MLflow scorers.
+4. Setup scorers to run in both offline development mode, and in an online setting on production traces. For offline settings, this process involves passing an MLflow Dataset or Pandas Dataframe to the [`mlflow.genai.evaluate()`](https://docs.databricks.com/gcp/en/mlflow3/genai/eval-monitor/evaluate-app#step-4-run-evaluation-with-predefined-scorers) function. For online settings, this involves collecting traces into an OLAP system such as Delta tables, and then running batch jobs to evaluate a sample of these production traces using the same MLflow scorers.
 
 5. Surface aggregated metrics in dashboards to monitor trends over time. Periodically have product managers / business SMEs review and refine test suites based on new failure modes observed in production.
 
-It's worth noting that seasoned traditional software developers often recommend "writing tests first". However, writing a full test suite upfront is rarely feasible with Generative AI. Unlike traditional software engineering, where we can reasonably anticipate the range of failure modes and edge cases, LLM outputs are less predictable in their outputs. Moreover, LLM capabilities differ across models and are constantly evolving with each new model release. Therefore, it's more often the case that edge cases have to be "discovered" and codified with more empirical methods.
+It can be useful to start with failure reports that come readily available from existing evaluation frameworks. For example, the evaluations UI from an MLflow Experiment allows users to filter for traces that fail a specific assessment. These traces, along with the LLM judge rationale that led to the failed assessment, can be surfaced in a notebook, SQL Dashboard or Databricks Apps UI.
+
+![failure-report-simple](./feedback-principles_files/failure-technical-report-03.png)
+
+Once developers understand their failure reporting requirements in more detail, customised reports can also be created. For example, a summary (possibly LLM-generated) of the most common types of agent requests received can be included 
+
+![failure-report-custom-01](./feedback-principles_files/failure-technical-report-01.png)
+
+A statistical summary of tool calls is another section that can be included 
+![failure-report-custom-02](./feedback-principles_files/failure-technical-report-02.png)
+
+It's worth noting that seasoned traditional software developers often recommend "writing tests first". However, writing a full test suite upfront is rarely feasible with Generative AI. Unlike traditional software engineering, where we can reasonably anticipate the range of failure modes and edge cases, LLM outputs are less predictable in their outputs. Moreover, LLM capabilities differ across models and are constantly evolving with each new model release. Therefore, it's more often the case that edge cases have to be "discovered" and codified with empirical methods.
 
 ### Proactively Manage Evaluation Costs
 
-Unlike traditional unit tests, LLM-as-a-judge calls cost money. Agent traces can span significant lengths, increasing token costs per test. Additionally, production monitoring entails running evaluation suites on a recurring basis, which can increase costs even further. Therefore, teams need strategies for creating fast and affordable evaluation suites.
+Unlike traditional unit tests, LLM-as-a-judge calls cost money. Agent traces can span significant lengths, increasing token costs per test. Additionally, production monitoring entails running evaluation suites on a recurring basis, which can increase costs even further. Therefore, to ensure fast and continuous feedback, cost optimization is unavoidable. Teams need strategies for creating fast and affordable evaluation suites. A non-exhaustive list is included below.
 
-1. Reduce tokens sent to LLMs. 
+**1. Reduce tokens sent to LLMs.**
 
 Rather than sending entire traces, experiment with strategies for reducing the input tokens sent to an LLM. 
 
 Some strategies include: 
+
 - Test more efficient text formatting approaches. For example, replace JSON formatting with XML or free text alternatives. 
-- Create tests are target specific inputs, outputs and expectations. As of MLflow version 3.3.3, the MLflow `make_judge` API supports this in two ways:
+- Create tests are target specific inputs, outputs and expectations. As of MLflow version 3.3.3, the MLflow [`make_judge`](https://mlflow.org/docs/3.4.0/genai/eval-monitor/scorers/llm-judge/make-judge/) API supports this in two ways:
     - injecting only specific inputs, outputs and expections into the evaluation prompt to LLM judge assessment. (Field-based evaluation)
     - passing an entire trace to an intelligent agent that fetches and analyzes the trace data, allowing it to focus on relevant aspects based on your evaluation instructions (Trace-based evaluation). This design enables trace-based judges to handle large, complex execution flows without hitting token limits.
 
-Example of field-based evaluation in MLflow
+*Example of field-based evaluation in MLflow*
 ```
 from mlflow.genai.judges import make_judge
 
@@ -89,7 +90,7 @@ print(f"Score: {feedback.value}")
 print(f"Rationale: {feedback.rationale}")
 ```
 
-Example of trace-based evaluation in MLflow
+*Example of trace-based evaluation in MLflow*
 
 ```
 from mlflow.genai.judges import make_judge
@@ -142,25 +143,20 @@ print(f"Performance: {feedback.value}")
 print(f"Analysis: {feedback.rationale}")
 ```
 
-
-- [link1](_Optimizing LLM prompts for low latency | Building with AI_. (n.d.). incident.io. https://incident.io/building-with-ai/optimizing-llm-prompts#case-study-planning-grafana-dashboards-for-an-incident) 
-- [link2](Hamel Husain. (2025, August 15). _From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres_ [Video]. YouTube. https://www.youtube.com/watch?v=N-qAOv_PNPc)
-- [link3](_LLM Inference Performance Engineering: Best Practices | DataBricks blog_. (n.d.). Databricks. https://www.databricks.com/blog/llm-inference-performance-engineering-best-practices)
-
-2. Use non-LLM-based checks when possible.
+- Use non-LLM-based checks when possible.
 Deterministic tests that compare received and expected outputs in a rule-based way is both faster and cheaper than using an LLM. For example, use keyword matching to identify whether a customer support ticket issue classifier returns one of a predefined list of categories. This approach eliminates inference costs entirely for certain test categories.
 
-3. Separate evaluation datasets into distinct classes oftest suites.
+- Separate evaluation datasets into distinct classes oftest suites.
 CI tests can be run quickly by limiting the number of input examples to a small number, for example approximately 100 examples. The main goal is to identify regressions before production deployment. 
 
 Production test suites can run on a larger sample of live traces through an offline batch job. The goal here is different to that of CI testing. Here, we are less time-constrained, and we want a large enough sample to allow us to identify new, uncategorized errors for triage.
 
-Tuning Automated LLM Judges for Reliability
-
-LLM judges require careful calibration to ensure consistent, reliable evaluations across different scenarios and edge cases.
 
 ### Enabling Easy Rollbacks During Failures
-Teams need robust rollback capabilities when agent or tool versions fail. These can be done through different mechanisms
+Teams need robust rollback capabilities when agent or tool versions fail. When issues are detected — whether from monitoring, failed tests, or user feedback — immediate rollbacks help restore service and keep the value stream moving. With generative AI, rollbacks don't only involve reverting back to a previous application version. There are other aspects of versioning to consider such as prompt versions, code versions and agent endpoint versions. 
+
+Artifact versioning can be managed in Databricks through various features: 
+
 - MLflow model versions in the MLflow model registry enable quick version management. 
 - API endpoints can revert to previous model versions instantly. 
 - Prompt registries maintain version control for prompt iterations. 
@@ -168,21 +164,20 @@ Teams need robust rollback capabilities when agent or tool versions fail. These 
 
 #### Example: ML Model Lifecycle Workflows in Unity Catalog
 
-```
+**1. Before Deployment: Add Model Metadata**
 
-#### Before Deployment: Add Model Metadata
 - Track data lineage using `mlflow.log_input` to link model to training datasets
 - Add descriptions, tags, and version-specific information through UI or API
 
----
+**2. Create Champion-Challenger Model Setup**
 
-##### Create Champion-Challenger Model Setup
+*2.1: Create Challenger Model*
 
-###### Step 1: Create Challenger Model
 - Register new model version using same process as above
 - Version numbers are automatically incremented (e.g., version 1, 2, 3...)
 
-###### Step 2: Set Model Aliases
+*2.2 Set Model Aliases*
+
 - Assign "Champion" alias to current production model and "Challenger" alias to new version:
 ```python
 from mlflow import MlflowClient
@@ -195,7 +190,8 @@ client.set_registered_model_alias("prod.ml_team.model_name", "Champion", 1)
 client.set_registered_model_alias("prod.ml_team.model_name", "Challenger", 2)
 ```
 
-###### Step 3: Deploy for A/B Testing
+**3: Deploy for A/B Testing**
+
 - Reference models by alias in inference workloads:
 ```python
 # Load Champion model
@@ -205,7 +201,8 @@ champion_model = mlflow.pyfunc.load_model("models:/prod.ml_team.model_name@Champ
 challenger_model = mlflow.pyfunc.load_model("models:/prod.ml_team.model_name@Challenger")
 ```
 
-###### Step 4: Promote Challenger to Champion
+**4. Promote Challenger to Champion**
+
 - After validation, reassign aliases:
 ```python
 # Promote Challenger to Champion
@@ -215,25 +212,24 @@ client.set_registered_model_alias("prod.ml_team.model_name", "Champion", 2)
 client.delete_registered_model_alias("prod.ml_team.model_name", "Challenger")
 ```
 
----
+**5. Model Rollback Process**
 
-##### Model Rollback Process
+*5.1: Identify Rollback Target*
 
-###### Step 1: Identify Rollback Target
 - List available model versions:
 ```python
 client = MlflowClient()
 versions = client.search_model_versions("name='prod.ml_team.model_name'")
 ```
 
-###### Step 2: Quick Rollback Using Aliases
+*5.2 Quick Rollback Using Aliases*
 - Reassign "Champion" alias to previous stable version:
 ```python
 # Rollback Champion alias to version 1
 client.set_registered_model_alias("prod.ml_team.model_name", "Champion", 1)
 ```
 
-###### Step 3: Update Deployment Systems
+*5.3 Update Deployment Systems*
 - Batch inference workloads automatically pick up the rollback on next execution when using aliases
 - For model serving endpoints, update via REST API:
 ```python
@@ -241,10 +237,16 @@ champion_version = client.get_model_version_by_alias("prod.ml_team.model_name", 
 # Update serving endpoint with rollback version
 ```
 
-###### Step 4: Verify Rollback
+**Step 4: Verify Rollback**
 - Test rolled-back model in staging environment
 - Monitor performance metrics to confirm successful rollback
 - Document rollback reason and actions taken
 
 This workflow ensures safe model deployment with quick rollback capabilities while maintaining full governance and traceability.
+
+# Further reading:
+
+- [Optimizing LLM prompts for low latency](_Optimizing LLM prompts for low latency | Building with AI_. (n.d.). incident.io. https://incident.io/building-with-ai/optimizing-llm-prompts#case-study-planning-grafana-dashboards-for-an-incident) 
+- [From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres](Hamel Husain. (2025, August 15). _From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres_ [Video]. YouTube. https://www.youtube.com/watch?v=N-qAOv_PNPc)
+- [LLM Inference Performance Engineering: Best Practices](_LLM Inference Performance Engineering: Best Practices | DataBricks blog_. (n.d.). Databricks. https://www.databricks.com/blog/llm-inference-performance-engineering-best-practices)
 

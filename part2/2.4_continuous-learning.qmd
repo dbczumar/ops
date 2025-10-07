@@ -1,12 +1,12 @@
 # Principle 3 The technical practices of learning
 
-Generative AI is a field that is rapidly changing. What was hard to accomplish yesterday might become easy tomorrow. For instance, as of 2025, post-training methods have greatly improved a model's ability to handle instructions and tool use, which has enabled agentic applications that were not feasible a year ago. This constant change makes it imperative that both business and technical stakeholders continuously update their mental models of what products are possible for them to build. 
+Generative AI is a field that changes fast. What was hard to accomplish yesterday might become easy tomorrow. For instance, as of 2025, post-training methods have greatly improved a model's ability to handle instructions and tool use, which has enabled agentic applications that were not feasible a year ago. This constant change makes it imperative that both business and technical stakeholders continuously update their mental models of what products are possible for them to build. 
 
-To accomplish this, organizations can enable institution-wide continual learning by encoding hard-won knowledge into reusable assets such as: 
+To accomplish this, organizations can enable institution-wide continual learning by encoding hard-won knowledge into assets different teams can reliably reuse to increase their changes of success. Examples of assets include:
 
 - standardised frameworks
 - reusable reference architectures 
-- communities of practice for both business and technical teams
+- industry / enterprise-specific agentic design patterns
 
 ## Context
 
@@ -18,7 +18,7 @@ To accomplish this, organizations can enable institution-wide continual learning
     - investing in continuously refining how business and technical stakeholders work together to uncover how to use generative AI to accomplish their goals
 
 ## Standardised frameworks
-Standarised frameworks allow us to achieve consistent, reliable, and efficient delivery at scale. An efficient framework aims to make software development and deployment feel like a well-oiled assembly line rather than a series of one-off custom projects, ultimately enabling faster time-to-market with higher quality and lower risk.
+Standarised development frameworks allow us to achieve consistent, reliable, and efficient delivery at scale. An efficient framework aims to make software development and deployment feel like a well-oiled assembly line rather than a series of one-off custom projects, ultimately enabling faster time-to-market with higher quality and lower risk.
 
 An example of a standardised framework that can be used for generative AI applications is [Databricks Asset Bundles (DAB)](https://github.com/databricks/mlops-stacks)
 
@@ -44,22 +44,46 @@ A framework like Databricks Asset Bundles provides a templatized end-to-end defi
 
 ## Reference architectures
 
-(customer story?)
+We covered reference architectures in detail in Part 1. We mention them again here in the context of organizational learning because they are valuable tools for scaling architectural knowledge and best practices across an organization. 
 
-Reference architectures provide teams with a proven blueprints containing established design patterns and best practices for building agentic applications. For example, a regulated industry might establish that all requests and responses need to pass through a guardrail step that filters messages for PII information. 
+Reference architectures provide teams with a proven blueprints containing established design patterns and best practices for building agentic applications. For example, a regulated industry might recommend that all requests and responses to an agent endpoint need to pass through a guardrail step that filters out Personal Identifiable Information (PII) from LLM outputs. 
 
-Creates shared understanding across teams about how systems should be built and why.
+Reference architectures create a shared understanding across teams about how systems should be built and why. 
 
-Provides 70-80% of the architectural decisions upfront, leaving teams to focus on the 20-30% that's specific to their unique requirements.
+They also capture 70-80% of the architectural decisions upfront, leaving teams to focus on the 20-30% that's specific to their unique requirements.
 
-## Technical best practices
+## Industry / enterprise-specific agentic design patterns
 
-## Business stakeholder education
+Reference architectures are useful for outlining how different components of a technology stack integrate with each other. But it's also useful to have shared blueprints that drill down specifically into how agents themselves should be designed. 
 
-Generative AI is not only a paradigm shift for how developers build applications, but how business users interact and use applications as well. 
+The reason for this is that, although the consensus is that generative AI has the potential to automate and enhance workflows across industries, the details of how we should tailor agent design to the particularities of an industry remains vague.Teams often have to learn as they develop. This hard-won knowledge should be shared as design patterns that can be adopted across an enterprise so teams do not have to reinvent the wheel. 
 
-First MVPs are hard because both developers and business users go through a journey learning about what is and is not possible. 
+Example 1: Insurance claims processing 
 
-For developers, they have to fill in their knowledge gaps. Software engineers might be new to the idea of data analysis and developing LLM judges. Machine Learning practitioners can be surprised by the amount of ETL and UI code they have to produce. Business users also may start with high expectations that may have to be calibrated 
+There are a few domain-specific aspects of insurance claims processing that influence how agents need to be built. 
 
-Example 
+- **Claims processing is an event-driven process:** When a claim is first received, the event may trigger a document review process. If review process identifies missing documents, then another event is triggered: a webhook is called that sends a customer a follow-up email asking for the missing documents. At this point, the processing workflow needs to be paused until the next event (an email reply from the customer) comes in. 
+
+- **Claims workflows need the ability to be paused and resumed** The event-driven workflow outlined above implies that, at crucial juncture, the agents graph needs to be paused and then resumed at a later point in time. 
+
+In terms of agent design, engineers need to plan for a state store that can create a checkpoint with details on the paused step. This checkpoint will be referenced when the workflow is resumed. Additionally, the agent subgraph encoding the agentic workflow will also need to be designed such that it can resume processing at specific points in the subgraph rather than needing to be re-run from the beginning. 
+
+- **Agent state depends on both local and global events** To add another layer of complexity, here may be parallel events (such as registering claims event with a third-party regulatory authority) that needs to be registered and taken into account when the workflow is resumed in order for the agent to have the most up-to-date context. 
+
+These features - an event-driven architecture, pause-and-resume capability, and a state store is something that will likely be shared across different claims departments. Developers building agentic solutions for each department would benefit from shared design elements such as a common schema outline for the state store, or a common JSON payload structure used to trigger a resume event. 
+
+Example 2: Financial services compliance 
+
+Within the financial services industry, regulatory bodies usually periodically release new regulations and reporting requirements that compliance departments need to follow. Monitoring for new regulatory requirements and desiging appropriate compliance checks used to be a manual process done by humans. However, organizations are increasingly interested in having this processe automated by an agent. 
+
+As with the example of insurance claims processing, there are shared elements of agent design that should be documented and reused by agents implemented for various compliance and audit-related use cases. 
+
+Agent handovers
+Regulatory assessor agent receives new regulation released by a government regulatory authority - outputs set of recommendations, assessments on potential gaps in existing compliance processes
+Regulatory checks proposed by Agent
+Handover to another agent to run and validate these checks conform to 
+
+Each step of the process might require multiple tool-calls and reasoning steps, making these use case unsuitable to be executed a pre-defined chain of LLM calls. 
+Agent handover, what information is included for each handover, is crucial for 
+
+Teams should design accordingly.

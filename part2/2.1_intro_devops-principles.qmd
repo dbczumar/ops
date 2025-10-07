@@ -10,6 +10,8 @@ The three core DevOps principles outlined in The DevOps Handbook remain as relev
 
 However, generative AI introduces unique characteristics that require us to rethink how we implement these principles in practice.
 
+In Part 2, we outline the unique challenges generative AI brings to DevOps and how DevOps practices need to adapt. While Part 2 is focused mainly on how individual developer teams can rethink best practices, Part 3 will concentrate on how wider teams and organisations can respond to these industry changes. 
+
 ## The Generative AI Challenge
 
 Generative AI applications present several fundamental differences from traditional software engineering applications:

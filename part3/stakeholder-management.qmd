@@ -2,12 +2,144 @@
 
 ## Introduction
 
-Managing stakeholder expectations and communication in agent ops projects.
+AgentOps projects change how organizations plan, deliver, and operate software. Because agent systems are non-deterministic and evolve quickly, success depends on proactive stakeholder management: clear ownership, short feedback loops, transparent metrics, and explicit decision records. This chapter provides a practical playbook aligned to the roles defined in `roles-responsibilities.qmd` and the lifecycle in `../part1/agentops-project-pipeline.qmd`.
 
-## Topics
+This section covers stakeholder mapping, a lightweight RACI, communication cadences, lifecycle touchpoints, and success metrics.
 
-- Communication strategies
-- Expectation management
-- Success metrics definition
+Note that this level of management might not be necessary for every single use case, but is critical in complex, enterprise use cases that require a high bar for quality, and involve many cross-functional stakeholders.
 
-*Content to be developed*
+---
+
+## Stakeholder Map
+
+Identify the minimum viable set of stakeholders and the value they expect. In smaller organizations, several of these may be the same person, and for certain use cases not all of these roles and stakeholders might be relevant, so treat this as the full superset of potential stakeholders that could be involved in a particular use case.
+
+| Stakeholder | Primary concerns | Success signals |
+| --- | --- | --- |
+| Executive Sponsor | Strategic fit, risk, ROI, reputation | Clear ROI narrative, governance in place, predictable spend |
+| Product Manager | Problem-solution fit, adoption, user satisfaction | Task success rate rising, active users, fewer escalations |
+| AI Engineer | Output quality, latency, cost, reliability | Stable prompts/tools, improving eval scores, low incident rate |
+| Data Engineer | Data availability, quality, governance | Reliable pipelines, documented lineage, privacy preserved |
+| Platform Engineer | Scalability, SLAs, cost control, provider management | SLOs met, budget adherence, safe rollout procedures |
+| Software Engineer | Integration UX, APIs, error handling | Clean contracts, graceful fallbacks, low UI regressions |
+| SME (Domain Expert) | Domain accuracy, compliance, usefulness | High SME agreement, fewer critical misinterpretations |
+| Legal/Compliance | Regulatory exposure, auditability | Guardrails, audit trails, documented approvals |
+| Security/Privacy | Data leakage, supply-chain, access | Threat model, red-team tests, secrets posture |
+| Finance/FinOps | Cost predictability, unit economics | Cost per interaction trending down, budgets met |
+
+See also: `roles-responsibilities.qmd` for detailed role definitions.
+
+---
+
+## Lightweight RACI for Key Decisions
+
+Use a pragmatic RACI to avoid ambiguity. Keep it short and revisit monthly.
+
+| Decision | R | A | C | I |
+| --- | --- | --- | --- | --- |
+| Use-case selection and scope | Product Manager | Executive Sponsor | SME, AI Engineer | All |
+| Project Resourcing | Executive Sponsor | Product Manager | All | All |
+| Data access/PII handling | Data Engineer | Legal/Compliance | Security, Product Manager | Executive Sponsor |
+| Architecture and Development | AI Engineer | Product Manager | Security, Platform Engineer, Data Engineer | Legal/Compliance |
+| Evaluation & Guardrails | AI Engineer, SME | Product Manager | Legal/Compliance, Executive Sponsor | Platform Engineer |
+| Budget/FinOps guardrails | Platform Engineer | Finance/FinOps | Product Manager, Executive Sponsor | AI Engineer |
+| Deployment & rollout plan | Platform Engineer | Product Manager | Software Engineer | All |
+| Incident response & escalation | Platform Engineer | Executive Sponsor | AI Engineer, Product Manager | Security |
+| Prompt/tooling change management | AI Engineer | Product Manager | SME, Platform Engineer | Legal/Compliance |
+| Governance reviews/audits | Legal/Compliance | Executive Sponsor | Platform Engineer, Product Manager | All |
+
+R = Responsible (does the work), A = Accountable (final decision), C = Consulted, I = Informed.
+
+---
+
+## Communication Cadence
+
+Like most projects, the communication cadence for GenAI projects should be dictated by the stage in the product development process. 
+
+Early stages of the project should focus heavily on team construction, metric definition through a cross-functional exercise, and SME data labeling and feedback to enable fast iteration. It is a best practice to share early and often! SME feedback can directly impact application performance, so waiting for perfection prior to sharing with internal SMEs can artificially slow down iteration speed.
+
+Later stages of the project should shift towards more production concerns, focusing on more frequent ops discussions, cost optimization, production monitoring and roadmap management.
+
+### Early-stage (development, pre-production)
+
+- **Initial project kickoff (30–45 min)**
+  - Objective: Align on agent objectives, identify cross-functional stakeholders, define agent metrics
+  - Owner: Product Manager
+  - Artifacts: Project plan, defined model metrics, stakeholder map, RACI chart
+
+- **Biweekly or monthly product demo (30–45 min)**
+  - Objective: demonstrate working slices, review evaluation metrics, collect SME feedback
+  - Owner: Product Manager
+  - Artifacts: labeled data, top regressions, prioritized roadmap
+
+- **Twice-weekly build review (15–20 min, or async)**
+  - Objective: plan/confirm experimental changes, track evaluation runs and acceptance thresholds
+  - Owner: AI Engineer with Product Manager
+  - Artifacts: experiment log, evaluation dashboard snapshot, change requests
+
+- **SME review sessions (60–90 min, as-needed)**
+  - Objective: refine rubrics, review edge cases, validate domain correctness
+  - Owner: Product Manager with SME
+  - Artifacts: golden set updates, judge calibration notes, acceptance criteria, all tracked in MLflow
+
+- **Ops dry-run (15 min, prior to first exposure)**
+  - Objective: validate runbooks, harden metrics, and alerting in a staging environment
+  - Owner: Platform Engineer
+  - Artifacts: runbook check, alert test results, rollback plan
+
+### Late-stage (production, scaling)
+
+- **Daily ops triage (15 min)**
+  - Objective: scan incidents, cost spikes, degraded evals, provider issues
+  - Owner: Platform Engineer
+  - Artifacts: open incidents, SLO dashboard, mitigation status
+
+- **Weekly product/business review (30–45 min)**
+  - Objective: track adoption and ROI, prioritize fixes/features against metric movements
+  - Owner: Product Manager
+  - Artifacts: adoption funnel, task success trend, cost per interaction, top regressions, updated roadmap
+
+- **Monthly governance review (45–60 min)**
+  - Objective: review risks, policy changes, and audit items; confirm compliance posture
+  - Owner: Legal/Compliance with Executive Sponsor
+  - Artifacts: decision log summary, change summaries, audit trail exports
+
+- **As-needed incident channel**
+  - Objective: coordinate P1/P2 incidents and external comms
+  - Owner: Platform Engineer
+  - Artifacts: incident timeline, stakeholder updates, RCA template and publication
+
+- **Quarterly roadmap/FinOps review (45–60 min)**
+  - Objective: evaluate unit economics, model/provider mix, review market changes, and budget adherence
+  - Owner: Product Manager with Finance/Platform
+  - Artifacts: cost per interaction trends, vendor mix report, savings opportunities backlog
+
+---
+
+## Success Metrics and Dashboards
+
+Defining quality metrics is often the most challenging aspect of communicating project updates to stakeholders. Ensuring that metrics are cross-functionally defined and clearly communicated at the start of a project is critical. Subjective and manual reviews of agents from stakeholders are critical, but given the complex nature of agent evaluation, it can become an anti-pattern where influential stakeholder subjective feedback primarily drives a project roadmap.
+
+Operational metrics typically mirror traditional software, with a much higher bar for variance given the rapid innovation in model releases and changes in pricing. Constantly reviewing for spikes and opportunities is critical given the ever-changing landscape.
+
+Given the broad hype around GenAI, retention is a critical metric to ensure usage does not end at initial experimentation. Choosing the right mix of metrics depends on the use case and whether the agent is directly customer-facing or used in internal applications.
+
+- **Quality**: task success rate, SME agreement rate, harmful output rate, judge score trend, hallucination rate
+- **Operations**: latency p95, error rate, incident MTTR, prompt/tool change failure rate
+- **Cost**: cost per interaction, token/input-output mix, cache hit rate, vendor model mix
+- **Adoption/Business**: active users, retention, time saved, CSAT/NPS, revenue or cost avoidance
+
+Recommended views:
+- Executive view: ROI narrative, risk trend, budget vs actual
+- Product/Engineering view: experiment throughput, regression alerts, guardrail trips
+- Ops view: SLO compliance, incident heatmap, provider health
+
+---
+
+## Anti-Patterns and How to Avoid Them
+
+- Metric instability: Avoid constantly changing or unclear KPIs. Set a stable core set of metrics through a cross-functional group of developers, SMEs, and leadership; add exploratory metrics separately.
+- Stakeholder overload: Too many reviewers block progress. Keep RACI minimal, timebox feedback, and avoid the urge to over-index on subjective feedback.
+- Demo theater: Cherry-picked prompts hide regressions. Always pair demos with evaluation deltas. Transparent feedback from stakeholders can directly drive product improvements.
+- Silent model/prompt changes: Erodes trust. Require change requests with automatic evaluation. MLflow and Prompt Registry help treat prompts as artifacts rather than just text.
+- Over-automation early: Invest in SME review and manual evaluation of traces before scaling automated judges.

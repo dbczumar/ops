@@ -4,9 +4,9 @@
 
 Successfully deploying agent-based AI systems requires a systematic approach that spans from initial conception to continuous improvement. This chapter provides a concise roadmap for AgentOps projects, serving as your navigation guide through the entire development lifecycle.
 
-While achieving faster adoption rates than transformative technologies like the personal computer and internet [@bick2024rapid], a 2025 MIT study suggests that 95% of AI pilots fail [@estrada2025mit]. The key to bridging this gap lies in systematic evaluation—building the capability to measure AI quality at scale, which creates the reliability needed to earn trust from both end users and leadership stakeholders.
+While achieving faster adoption rates than transformative technologies like the personal computer and internet [@bick2024rapid], a 2025 MIT study suggests that 95% of AI pilots fail [@estrada2025mit]. The key to bridging this gap is building the measurement capability to enable AI quality at scale, which creates the reliability needed to earn trust from both end users and leadership stakeholders.
 
-This section walks through a typical agent development project flow and provides cross-references throughout the document to dive deep into each phase's detailed implementation guidance.
+This chapter walks through a typical agent development project flow and provides cross-references throughout the document to dive deep into each phase's detailed implementation guidance.
 
 ## Phase 1: Project Conception and Team Formation
 
@@ -20,23 +20,23 @@ Avoid common anti-patterns like overly broad use cases or problems better solved
 ### 1.2 Cross-Functional Team Assembly
 **Objective**: Build a collaborative team with the right mix of technical and domain expertise.
 
-Assemble your core team including AI Engineers, Data Engineers, Software Engineers, Platform Engineers, Subject Matter Experts, Product Managers, and Executive Sponsors. Establish SME availability upfront—AI projects fail when developers must "beg for time" from domain experts.
+Assemble your core team including leadership stakeholders, technical developers, and subject matter experts (SMEs) with expertise in the agent domain. 
 
 *→ Detailed coverage: [Part 3: Roles and Responsibilities](../part3/roles-responsibilities.qmd)*
 
 ### 1.3 Stakeholder Alignment and Governance
-**Objective**: Create organizational alignment around evaluation importance and project governance.
+**Objective**: Create organizational alignment around key deliverables, success metrics and project governance.
 
-Establish governance frameworks, educate leadership on AI limitations, and plan communication strategies for regular stakeholder updates.
+Establish governance frameworks, educate leadership on AI limitations and plan communication strategies for regular stakeholder updates.
 
-*→ Detailed coverage: [Part 3: Stakeholder Management](../part3/stakeholder-management.qmd)*
+*→ Detailed coverage: [Part 3: Stakeholder Management](../part3/stakeholder-management.qmd)* 
 
 ## Phase 2: Data Preprocessing and Indexing
 
-### 2.1 Data Architecture Planning
+### 2.1 Data and Agent Architecture Planning
 **Objective**: Design data pipelines optimized for AI consumption rather than traditional analytics.
 
-Focus on unstructured data processing, semantic search capabilities, and multimodal content handling. Key differences from traditional ETL include vector storage, embedding generation, and LLM-based information extraction.
+Focus on unstructured data processing, semantic search capabilities, and multimodal content handling. Key differences from traditional ETL include more of an emphasis on vector indicies, embedding generation, and LLM-based information extraction.
 
 *→ Detailed coverage: [Part 1: Reference Architecture](reference-architecture.qmd)*
 
@@ -52,18 +52,16 @@ Establish ACID transactions, quality monitoring, failure handling, and complianc
 ### 3.1 Architecture Pattern Selection
 **Objective**: Choose the right level of complexity and framework for your use case.
 
-Evaluate DIY/Custom vs. Code-First Frameworks vs. Low-Code platforms based on your requirements. Avoid over-engineering with unnecessary supervisor-agent patterns when deterministic chains suffice.
+Evaluate DIY/Custom approaches vs. Code-First Frameworks vs. Low-Code platforms based on your project requirements. Avoid over-engineering with unnecessary supervisor-agent patterns when deterministic chains suffice.
 
 *→ Detailed coverage: [Part 1: Evolving Trends - Architecture Patterns](evolving-trends.qmd)*
 
 ### 3.2 Cross-Functional Evaluation Planning
 **Objective**: Establish evaluation criteria through collaborative discovery between technical teams and domain experts.
 
-**The Cross-Functional Imperative**: Understanding what "good" looks like for complex, subjective AI outputs requires essential input from domain experts and end-users. This necessitates close collaboration to define evaluation guidelines aligned with specific business objectives.
+Understanding what "good" looks like for complex, subjective AI outputs requires essential input from domain experts and end-users. This necessitates close collaboration to define evaluation guidelines aligned with specific business objectives.
 
-Implement Judge Calibration Workshops to convert human expertise into scalable automated evaluation. This hybrid approach between LLM judges and targeted human expertise is crucial for building trust, especially in regulated domains.
-
-*→ Detailed coverage: [Part 2: Feedback Principles](../part2/2.3_feedback-principles.qmd)*
+*→ Detailed coverage: [Part 2: Feedback Principles](../part2/2.3_feedback-principles.qmd)* and [Part 2: Continuous Learning](../part2/2.4_continuous-learning.qmd)*
 
 ### 3.3 Guardrails and Safety Implementation
 **Objective**: Implement comprehensive safety measures and operational boundaries.
@@ -72,16 +70,25 @@ Establish input validation, output monitoring, tool access controls, and operati
 
 *→ Detailed coverage: [Part 1: Reference Architecture - Guardrails](reference-architecture.qmd)*
 
-## Phase 4: Evaluation Framework Implementation
+## Phase 4: Agent Development and Evaluation Framework Implementation
 
-### 4.1 The Testing Pyramid for AI Systems
+### 4.1 Agent Development Workflow
+**Objective**: Make development activities first-class alongside evaluation, with evaluation signals driving what gets built next.
+
+After preparing data and creating tools for the agent, development moves to the initial prototyping that is largely reliant on a “vibe check” to determine quality (see Part 2 for MLflow traces and LLM judges). While this approach does not scale to production, it is a great way to quickly get started with the iterative development process.
+
+From there, development and evaluation become a single loop to prepare for production. LLM judges and SME reviews provide quantitative and qualitative signals that prioritize engineering work, while trace debugging and dataset curation turn those signals into concrete fixes.
+
+→ Detailed coverage: [Part 2: Flow Principles — Six-Step Lifecycle](../part2/2.2_flow-principles.qmd)
+
+### 4.2 The Testing Pyramid for AI Systems
 **Objective**: Build a comprehensive evaluation strategy from manual validation to automated monitoring.
 
 Start with manual SME review to understand quality patterns, then scale through automated LLM judges and programmatic checks. Implement both offline testing and online production monitoring.
 
 *→ Detailed coverage: [Part 2: Flow Principles - Test Suite Development](../part2/2.2_flow-principles.qmd)*
 
-### 4.2 Cost-Effective Evaluation Strategies
+### 4.3 Cost-Effective Evaluation Strategies
 **Objective**: Scale evaluation while managing token costs and computational overhead.
 
 Unlike traditional unit tests, LLM-based evaluations cost money. Implement token-efficient strategies, field-based vs. trace-based evaluation approaches, and smart sampling techniques.
@@ -131,13 +138,13 @@ Address cost management, quality consistency, organizational change, and technic
 
 ## Conclusion: Delivering Strategic Business Value
 
-Following this systematic pipeline transforms AI initiatives from experimental pilots into strategic business assets that drive measurable outcomes. Organizations that master this approach don't just deploy successful AI systems—they build the organizational capabilities, data assets, and operational excellence that create lasting competitive advantages.
+While each project is different, this systematic pipeline provides a blueprint of how to transform AI initiatives from experimental pilots into strategic business assets that drive measurable outcomes. Organizations that master this approach don't just deploy successful AI systems—they build the organizational capabilities, data assets, and operational excellence that create lasting competitive advantages.
 
 The systematic approach outlined in this pipeline enables organizations to:
 - **Accelerate time-to-value** through structured, repeatable processes
 - **Minimize project risk** by addressing common failure modes proactively  
 - **Scale AI capabilities** across the enterprise with consistent quality
-- **Generate measurable ROI** through improved efficiency and innovation
+- **Generate measurable ROI** through improved efficiency and quantified performance
 - **Build organizational AI maturity** that compounds over future projects
 
 **Next Steps**: Use this pipeline as your project roadmap, diving into the detailed chapters referenced throughout for specific implementation guidance. Remember that successful AgentOps projects often iterate between phases as understanding deepens and requirements evolve.

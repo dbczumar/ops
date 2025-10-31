@@ -2,7 +2,11 @@
 
 ## Introduction
 
-AgentOps projects change how organizations plan, deliver, and operate software. Because agent systems are non-deterministic and evolve quickly, success depends on proactive stakeholder management: clear ownership, short feedback loops, transparent metrics, and explicit decision records. This chapter provides a practical playbook aligned to the roles defined in `roles-responsibilities.qmd` and the lifecycle in `../part1/agentops-project-pipeline.qmd`.
+AgentOps projects change how organizations plan, deliver, and operate software. Because agent systems are non-deterministic and evolve quickly, success depends on proactive stakeholder management: clear ownership, short feedback loops, transparent metrics, and explicit decision records. 
+
+Agents introduce new metrics and operational tasks (like reconciling SME feedback with automated judges). Even “standard” reliability metrics behave differently; for instance, a reasoning LLM can produce highly variable latency by query. So while the metric names are unchanged, the way you evaluate them should be.
+
+This chapter provides a practical playbook aligned to the roles defined in `roles-responsibilities.qmd` and the lifecycle in `../part1/agentops-project-pipeline.qmd`.
 
 This section covers stakeholder mapping, a lightweight RACI, communication cadences, lifecycle touchpoints, and success metrics.
 
@@ -56,7 +60,11 @@ R = Responsible (does the work), A = Accountable (final decision), C = Consulted
 
 Like most projects, the communication cadence for GenAI projects should be dictated by the stage in the product development process. 
 
-Early stages of the project should focus heavily on team construction, metric definition through a cross-functional exercise, and SME data labeling and feedback to enable fast iteration. It is a best practice to share early and often! SME feedback can directly impact application performance, so waiting for perfection prior to sharing with internal SMEs can artificially slow down iteration speed.
+Early stages of the project should focus heavily on team construction, metric definition through a cross-functional exercise, and SME data labeling and feedback to enable fast iteration. 
+
+It is a best practice to share early and often! SME feedback can directly impact application performance, so waiting for perfection prior to sharing with internal SMEs can artificially slow down iteration speed. 
+
+Feedback may cover general response quality or tone, or be more concrete such as flagging missing documentation that should be included in the response. Both forms of feedback are valuable to inform agent development and building labeled datasets that can be used for evaluation.
 
 Later stages of the project should shift towards more production concerns, focusing on more frequent ops discussions, cost optimization, production monitoring and roadmap management.
 
@@ -68,9 +76,9 @@ Later stages of the project should shift towards more production concerns, focus
   - Artifacts: Project plan, defined model metrics, stakeholder map, RACI chart
 
 - **Biweekly or monthly product demo (30–45 min)**
-  - Objective: demonstrate working slices, review evaluation metrics, collect SME feedback
+  - Objective: demonstrate working prototypes, review evaluation metrics, collect SME feedback
   - Owner: Product Manager
-  - Artifacts: labeled data, top regressions, prioritized roadmap
+  - Artifacts: functioning prototype, top regressions, prioritized roadmap
 
 - **Twice-weekly build review (15–20 min, or async)**
   - Objective: plan/confirm experimental changes, track evaluation runs and acceptance thresholds
@@ -78,14 +86,14 @@ Later stages of the project should shift towards more production concerns, focus
   - Artifacts: experiment log, evaluation dashboard snapshot, change requests
 
 - **SME review sessions (60–90 min, as-needed)**
-  - Objective: refine rubrics, review edge cases, validate domain correctness
+  - Objective: refine rubrics, review edge cases, validate domain correctness, discuss open-ended feedback
   - Owner: Product Manager with SME
   - Artifacts: golden set updates, judge calibration notes, acceptance criteria, all tracked in MLflow
 
-- **Ops dry-run (15 min, prior to first exposure)**
-  - Objective: validate runbooks, harden metrics, and alerting in a staging environment
+- **Ops dry-run (60 min, prior to first release)**
+  - Objective: create and validate runbooks, harden metrics, align on deployment pipeline plan for beta testing and production.
   - Owner: Platform Engineer
-  - Artifacts: runbook check, alert test results, rollback plan
+  - Artifacts: runbook check, alert test results, rollback plan, CI/CD architecture
 
 ### Late-stage (production, scaling)
 
@@ -100,7 +108,7 @@ Later stages of the project should shift towards more production concerns, focus
   - Artifacts: adoption funnel, task success trend, cost per interaction, top regressions, updated roadmap
 
 - **Monthly governance review (45–60 min)**
-  - Objective: review risks, policy changes, and audit items; confirm compliance posture
+  - Objective: review risks, policy changes, and audit items, confirm compliance posture
   - Owner: Legal/Compliance with Executive Sponsor
   - Artifacts: decision log summary, change summaries, audit trail exports
 
@@ -110,9 +118,9 @@ Later stages of the project should shift towards more production concerns, focus
   - Artifacts: incident timeline, stakeholder updates, RCA template and publication
 
 - **Quarterly roadmap/FinOps review (45–60 min)**
-  - Objective: evaluate unit economics, model/provider mix, review market changes, and budget adherence
+  - Objective: evaluate unit economics, model/provider mix, review ops plan, analyze market trends
   - Owner: Product Manager with Finance/Platform
-  - Artifacts: cost per interaction trends, vendor mix report, savings opportunities backlog
+  - Artifacts: cost per interaction trends, vendor mix report, savings opportunities backlog, changes to ops architecture
 
 ---
 

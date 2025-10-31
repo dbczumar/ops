@@ -5,6 +5,42 @@ As outlined in The DevOps Handbook, teams must decrease deployment time for chan
 
 ## Implementing Efficient Flows
 
+### Creating Quick Feedback Loops Through Systematic Test Suite Development
+Unit testing and integration testing in software engineering can usually be defined upfront because we have an idea of the behaviour of the system we want to build, including it's edge cases. Generative AI is different. Creating tests needs an additional preliminary step of  extensively analysing traces of previous requests and responses in order to identify common failures modes. Only when these failure modes are identified and categorised can we then defining automated checks to identify those failure patterns. 
+
+**Dangerous default** 
+
+Teams often fall into a dangerous default pattern where one tester runs five to six queries repeatedly in a chat interface and provides pass/fail analysis. This approach fails to capture error frequency metrics or classify failure types systematically.
+
+**Teams should instead apply the scientific method iteratively.**
+
+1. Start by categorizing failure modes as quickly as possible using approximately 100 traces. ([source](**Husain, H., & Shankar, S. (n.d.). Frequently Asked Questions (And Answers) about AI Evals – Hamel’s blog. Hamel’s Blog. https://hamel.dev/blog/posts/evals-faq/**)). These traces can be collected in a variety of ways:
+
+    - If an application is already in production, sample production traces. Make sure production traces are sufficiently diverse and cover a range of input categories, conversation lengths and types of tool calls
+
+    - If an application is still in development, work with an SME to define a set of inputs that they anticipate should cover the range of scenarios a workflow or subagent should cover. Because LLM calls are non-deterministic, each input should be run 3-4 times so we can measure response consistency. 
+
+2. Create failure reports using tools like MLflow or Jupyter notebooks with visualizations [1](**Husain, H., & Shankar, S. (n.d.). Frequently Asked Questions (And Answers) about AI Evals – Hamel’s blog. Hamel’s Blog. https://hamel.dev/blog/posts/evals-faq/**).
+
+3. Gradually calibrate automated LLM judges metrics based on insights from step 2 and consultation with domain experts. (We will cover a basic workflow in more detail the following chapter - 2.3 Feedback Principles, using a worked example of a customer email generator). The output will be a set of scorers such as [MLflow Gen AI Scorers](https://mlflow.org/docs/latest/genai/concepts/scorers/) that can scale up trace evaluation in both development and production settings. 
+
+4. Setup scorers to run in both offline development mode, and in an online setting on production traces. For offline settings, this process involves passing an MLflow Dataset or Pandas Dataframe to the [`mlflow.genai.evaluate()`](https://docs.databricks.com/gcp/en/mlflow3/genai/eval-monitor/evaluate-app#step-4-run-evaluation-with-predefined-scorers) function. For online settings, this involves collecting traces into an OLAP system such as Delta tables, and then running batch jobs to evaluate a sample of these production traces using the same MLflow scorers.
+
+5. Surface aggregated metrics in dashboards to monitor trends over time. Periodically have product managers / business SMEs review and refine test suites based on new failure modes observed in production.
+
+It can be useful to start with failure reports that come readily available from existing evaluation frameworks. For example, the evaluations UI from an MLflow Experiment allows users to filter for traces that fail a specific assessment. These traces, along with the LLM judge rationale that led to the failed assessment, can be surfaced in a notebook, SQL Dashboard or Databricks Apps UI.
+
+![failure-report-simple](./feedback-principles_files/failure-technical-report-03.png)
+
+Once developers understand their failure reporting requirements in more detail, customised reports can also be created. For example, a summary (possibly LLM-generated) of the most common types of agent requests received can be included 
+
+![failure-report-custom-01](./feedback-principles_files/failure-technical-report-01.png)
+
+A statistical summary of tool calls is another section that can be included 
+![failure-report-custom-02](./feedback-principles_files/failure-technical-report-02.png)
+
+It's worth noting that seasoned traditional software developers often recommend "writing tests first". However, writing a full test suite upfront is rarely feasible with Generative AI. Unlike traditional software engineering, where we can reasonably anticipate the range of failure modes and edge cases, LLM outputs are less predictable in their outputs. Moreover, LLM capabilities differ across models and are constantly evolving with each new model release. Therefore, it's more often the case that edge cases have to be "discovered" and codified with empirical methods.
+
 ### The Six-Step Agent Development Lifecycle (Evaluation-Driven)
 
 Generative AI blurs the lines between development and evaluation. After initial prototyping and “vibe checking,” evaluation should drive development priorities. LLM judges and SME reviews become the quantitative and qualitative engines that select where to invest engineering time, and they build trust with stakeholders over time.

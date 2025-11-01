@@ -1,24 +1,1448 @@
-#### Anatomy of a deployment pipeline
+# Deploying agent-based pipelines on Databricks
 
-[DRAFT lucidchart](https://lucid.app/lucidchart/3c5f3fc1-ad2a-40f6-9f89-74b6dbb1fe14/edit?invitationId=inv_07475903-1de7-457b-88d1-74adfe4f4ba2&page=t3zIPiA-na8H#)
+## Overview
 
-![[./deployment-pipeline_files/figure-latex/deployment-pipeline.png]]
+This section covers the end-to-end deployment of production-grade AI agents on the Databricks platform. You'll learn:
 
-Application architecture:
-- Monolith with the app v.s. as a separate service (or microservice)
-- Composing apps & apps, composing apps & endpoints
-	
-Configuration management
-- ❌ Configuration in code
--  ✅Configuration in declarative files - YAML / JSON
-- Example from telco customer support agent
-![[./deployment-pipeline_files/figure-latex/config-mgmt.png]]
-	- [product sub-agent configuration YAML ](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/configs/agents/product.yaml#L3)
-	- [product sub-agent LLM pydantic model](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/telco_support_agent/config/schemas.py#L10)
-	- [configuration loaded into `BaseAgent` class](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/telco_support_agent/agents/base_agent.py#L115)
+- **Agent Framework fundamentals**: Understanding the Mosaic AI Agent Framework, the ResponsesAgent interface, and supported agent architectures (RAG, tool-calling, multi-agent, stateful)
+- **Building RAG agents**: Integrating vector search with Unity Catalog, implementing MLflow tracing for retrievers, and creating production-ready RAG systems
+- **Multi-agent systems**: When to use multi-agent patterns, implementing supervisor-worker architectures, and integrating Genie for structured data queries
+- **Unity Catalog governance**: Using the three-level namespace for environment isolation, registering agents and tools, implementing automatic authentication passthrough, and maintaining lineage
+- **AI Gateway capabilities**: Centralized model governance, rate limiting and security features, inference tables for monitoring, and usage tracking
+- **Asset Bundles for CI/CD**: Infrastructure-as-Code patterns, development vs. production deployment modes, the "deploy code, not models" MLOps approach, and multi-environment workflows
+- **CI/CD implementation**: GitHub Actions integration, workload identity federation, automated deployment pipelines, and testing strategies
+- **Evaluation and monitoring**: Synthetic evaluation dataset generation, built-in AI judges, custom metrics, continuous monitoring with inference tables, and the Review App
+- **Component deployment**: Model registration patterns, vector search deployment, Model Serving endpoints, secrets management, and cross-component dependencies
+- **Production best practices**: Pre-deployment checklists, monitoring and observability, continuous improvement workflows, Champion/Challenger promotion patterns, and common pitfalls
 
-Infrastructure and resource management (need diagram)
-- Databricks Asset Bundles 
-	- environments-specific configurations such as UC catalogs and schemas specified in `databricks.yml`
-	- `databricks.yml` parameters injected into deployment job pipeline
-	- notebook within deployment job reads 
+By the end of this section, you'll understand how to deploy, govern, monitor, and continuously improve agent systems using Databricks' comprehensive platform capabilities.
+
+---
+
+Databricks provides a production-grade platform for deploying AI agents through its Mosaic AI Agent Framework, unified governance via Unity Catalog, and Infrastructure-as-Code capabilities through Databricks Asset Bundles. This comprehensive approach brings enterprise-grade MLOps practices to generative AI applications, enabling organizations to deploy, govern, and continuously improve agent systems at scale.
+
+## Understanding the Databricks Agent Framework
+
+**Mosaic AI Agent Framework** is Databricks' comprehensive solution for building and deploying production-ready agent systems. Announced at Data + AI Summit 2024, it enables developers to author agents in Python using any third-party library while benefiting from integrated governance, evaluation, and deployment capabilities.
+
+### What makes an agent system
+
+An agent system differs fundamentally from a standalone LLM. While an LLM only produces output when prompted, an agent system possesses autonomy—it can perceive, decide, and act in an environment to achieve goals. Modern LLM-based agent systems use an LLM as the "brain" to interpret context, reason about actions, and issue commands such as API calls, retrieval mechanisms, and tool invocations.
+
+### Core capabilities of the framework
+
+The Agent Framework supports multiple development approaches. Developers can build agents using **LangGraph, LangChain, LlamaIndex, OpenAI SDK, or custom Python implementations**. This framework-agnostic design ensures teams aren't locked into specific tools and can evolve their architecture as requirements grow.
+
+Integration with the Databricks ecosystem provides critical production capabilities: **MLflow for logging, tracking, and deployment; Unity Catalog for governance and tool management; Model Serving for production endpoints; and AI Gateway for model access and guardrails**. Development tools include AI Playground for low-code prototyping, Agent Evaluation for quality assessment, MLflow Tracing for observability, and Review App for stakeholder feedback.
+
+The framework supports multiple agent types: **Retrieval Augmented Generation (RAG) agents that combine LLM capabilities with document retrieval, tool-calling agents that execute functions dynamically, multi-agent systems with specialized workers coordinated by a supervisor, and stateful agents with memory** for maintaining conversation context.
+
+### The ResponsesAgent interface
+
+For agent development, Databricks recommends the **ResponsesAgent** interface as the standard authoring pattern. This interface supports advanced capabilities including multi-agent systems, streaming output, comprehensive tool-calling message history, and long-running tool support.
+
+```python
+from mlflow.pyfunc import ResponsesAgent
+from mlflow.types.agent import (
+    ResponsesAgentRequest,
+    ResponsesAgentResponse,
+    ResponsesAgentStreamEvent,
+)
+
+class MyAgent(ResponsesAgent):
+    def __init__(self, agent):
+        self.agent = agent
+    
+    def predict(self, request: ResponsesAgentRequest) -> ResponsesAgentResponse:
+        """Non-streaming inference"""
+        messages = self.prep_msgs_for_llm([i.model_dump() for i in request.input])
+        agent_response = self.agent.invoke(messages)
+        
+        output_item = self.create_text_output_item(
+            text=agent_response, 
+            id=str(uuid4())
+        )
+        return ResponsesAgentResponse(output=[output_item])
+    
+    def predict_stream(
+        self, request: ResponsesAgentRequest
+    ) -> Generator[ResponsesAgentStreamEvent, None, None]:
+        """Streaming inference"""
+        messages = self.prep_msgs_for_llm([i.model_dump() for i in request.input])
+        
+        item_id = str(uuid4())
+        aggregated_stream = ""
+        
+        for chunk in self.agent.stream(messages):
+            yield self.create_text_delta(delta=chunk, item_id=item_id)
+            aggregated_stream += chunk
+        
+        yield ResponsesAgentStreamEvent(
+            type="response.output_item.done",
+            item=self.create_text_output_item(text=aggregated_stream, id=item_id),
+        )
+```
+
+This interface provides typed authoring, automatic signature inference, automatic tracing, and seamless integration with AI Gateway-enhanced inference tables. Most importantly, **it ensures compatibility with the full Databricks agent ecosystem**, including AI Playground, Review App, and evaluation tools.
+
+## Building RAG agents with vector search
+
+RAG (Retrieval Augmented Generation) represents one of the most common agent patterns. These agents ground LLM responses in enterprise data, reducing hallucinations and providing traceable source attribution.
+
+### Vector search integration patterns
+
+Databricks offers **two primary approaches for integrating vector search**: local development using databricks-langchain and Unity Catalog functions for production deployments.
+
+For local development and prototyping, the databricks-langchain bridge provides seamless integration:
+
+```python
+from databricks_langchain import VectorSearchRetrieverTool, ChatDatabricks
+
+vs_tool = VectorSearchRetrieverTool(
+    index_name="catalog.schema.databricks_docs_index",
+    tool_name="databricks_docs_retriever",
+    tool_description="Retrieves information from Databricks documentation."
+)
+
+llm = ChatDatabricks(endpoint="databricks-claude-3-7-sonnet")
+llm_with_tools = llm.bind_tools([vs_tool])
+```
+
+For production deployments with enhanced governance, **Unity Catalog functions provide centralized tool management**:
+
+```sql
+CREATE OR REPLACE FUNCTION main.default.databricks_docs_vector_search (
+    query STRING COMMENT 'The query string for searching documentation.'
+) RETURNS TABLE
+COMMENT 'Executes search on Databricks documentation.' 
+RETURN
+SELECT
+    chunked_text as page_content,
+    map('doc_uri', url, 'chunk_id', chunk_id) as metadata
+FROM
+    vector_search(
+        index => 'catalog.schema.databricks_docs_index',
+        query => query,
+        num_results => 5
+    )
+```
+
+### MLflow tracing for retrievers
+
+Critical for production observability, **MLflow tracing captures retrieval operations with structured metadata**. The RETRIEVER span type is specifically designed for retrieval tools, and Databricks features like AI Playground and evaluation frameworks use this span type to display retrieval results:
+
+```python
+import mlflow
+from mlflow.entities import Document
+
+class VectorSearchRetriever:
+    @mlflow.trace(span_type="RETRIEVER", name="vector_search")
+    def __call__(self, query: str) -> List[Document]:
+        with mlflow.start_span(name="VectorIndex", span_type="RETRIEVER") as span:
+            span.set_inputs({"query": query})
+            span.set_attributes({"top_n": 5})
+            # Perform retrieval
+            results = self.index.similarity_search(query, num_results=5)
+            span.set_outputs(results)
+        return results
+```
+
+Setting the retriever schema ensures proper integration across the agent ecosystem:
+
+```python
+mlflow.models.set_retriever_schema(
+    name="vector_search",
+    primary_key="document_id",
+    text_column="chunk_text",
+    doc_uri="doc_uri",
+    other_columns=["title"]
+)
+```
+
+### Complete RAG implementation
+
+A production RAG agent combines LLM capabilities, vector search, and Unity Catalog tools:
+
+```python
+from databricks_langchain import ChatDatabricks
+from unitycatalog.ai.langchain.toolkit import UCFunctionToolkit
+import mlflow
+
+mlflow.langchain.autolog()
+
+llm = ChatDatabricks(endpoint="databricks-meta-llama-3-3-70b-instruct")
+
+uc_toolkit = UCFunctionToolkit(
+    function_names=["catalog.schema.tfidf_keywords"]
+)
+
+@tool
+def find_relevant_documents(query, top_n=5):
+    """Retrieves relevant documents for the query"""
+    with mlflow.start_span(name="DocumentIndex", span_type="RETRIEVER") as span:
+        span.set_inputs({"query": query})
+        # TF-IDF retrieval logic
+        span.set_outputs(results)
+    return results
+
+graph = create_tool_calling_agent(
+    llm, 
+    tools=[*uc_toolkit.tools, find_relevant_documents]
+)
+
+set_retriever_schema(
+    primary_key="chunk_id",
+    text_column="chunk_text",
+    doc_uri="doc_uri",
+    other_columns=["title"],
+)
+```
+
+This pattern provides **automatic tracing, governed tool access, and seamless deployment** to Model Serving endpoints.
+
+## Multi-agent systems architecture
+
+Multi-agent systems consist of multiple AI agents working together, each with specialized capabilities. The typical architecture includes **a supervisor agent that orchestrates and manages context for specialized worker agents**.
+
+### When to use multi-agent patterns
+
+Multi-agent architectures excel when you have clearly distinct domains or skill sets. A common pattern combines **a RAG agent for unstructured document queries with a Genie agent for structured data analytics**. The supervisor analyzes incoming requests and routes them to appropriate worker agents, aggregating responses into unified answers.
+
+However, Databricks recommends caution: **"Most enterprise use cases are handled well by single-agent systems."** Multi-agent systems add debugging complexity, coordination overhead, and potential for infinite loops. Start with single-agent designs and evolve to multi-agent only when distinct domain separation provides clear benefits.
+
+### Multi-agent implementation with Genie
+
+Genie, Databricks' AI-powered SQL assistant, integrates seamlessly into multi-agent systems. **Genie agents query structured data using natural language while respecting Unity Catalog permissions**, enabling secure data access with row-level and column-level security.
+
+For multi-agent systems with Genie, authentication requires careful configuration. The recommended approach uses **on-behalf-of-user authentication** for secure access with appropriate permissions: CAN RUN on Genie Space, CAN USE on SQL Warehouse, SELECT on Unity Catalog Tables, and EXECUTE on Unity Catalog Functions.
+
+A typical multi-agent workflow proceeds as follows: user submits a query to the supervisor agent, which analyzes the query type and routes to appropriate workers—a RAG agent for documentation queries, a Genie agent for data analytics, or an API agent for external integrations—before aggregating responses into a unified answer.
+
+## Unity Catalog as the governance foundation
+
+Unity Catalog serves as the **central governance layer for all agent components**: models, tools (functions), data, and entire agent systems. This unified approach eliminates fragmented governance and provides consistent security, access control, and audit capabilities.
+
+### Three-level namespace organization
+
+Unity Catalog uses a hierarchical three-level namespace: **catalog.schema.object**. This structure maps naturally to multi-environment deployments, where catalogs represent environments (dev, staging, prod), schemas organize by team or project, and objects are individual assets like models, functions, or tables.
+
+A well-designed structure might look like:
+
+```
+prod_catalog
+├── customer_support
+│   ├── chat_agent (model)
+│   ├��─ query_knowledge_base (function)
+│   ├── escalate_ticket (function)
+│   └── conversation_logs (table)
+├── data_analysis
+│   ├── sql_agent (model)
+│   ├── execute_query (function)
+│   └── query_results (table)
+```
+
+This organization provides **clear ownership boundaries, simplified permission management, and natural alignment with multi-environment workflows**.
+
+### Registering agents to Unity Catalog
+
+Agent registration follows the standard MLflow pattern with Unity Catalog integration:
+
+```python
+import mlflow
+mlflow.set_registry_uri("databricks-uc")
+
+catalog_name = "prod"
+schema_name = "agents"
+model_name = "customer_support_agent"
+full_model_name = f"{catalog_name}.{schema_name}.{model_name}"
+
+uc_model_info = mlflow.register_model(
+    model_uri=logged_agent_info.model_uri, 
+    name=full_model_name
+)
+```
+
+Registration captures the agent's code, configuration, and dependencies as a versioned artifact. **Each registration creates an immutable version with full lineage tracking**, enabling rollback, A/B testing, and compliance auditing.
+
+### Unity Catalog functions as governed tools
+
+UC Functions transform API calls and business logic into **centrally governed, discoverable tools that agents can invoke**. This approach provides several critical advantages: centralized governance with role-based access control, prevention of credential sprawl, full audit trails, and reusability across teams and projects.
+
+Creating a UC Function tool follows a straightforward pattern:
+
+```python
+from databricks.sdk import WorkspaceClient
+
+def lookup_customer_info(customer_name: str) -> str:
+    """
+    Returns customer metadata including email and ID.
+    
+    Use when you need to retrieve customer contact information.
+    Searches by exact name match.
+    
+    Args:
+        customer_name: Full name matching database records
+    
+    Returns:
+        Formatted string with customer ID and email
+    """
+    # Implementation
+    return f"ID: {customer_id}, Email: {email}"
+
+client = WorkspaceClient()
+function_info = client.create_python_function(
+    func=lookup_customer_info,
+    catalog="prod",
+    schema="customer_support",
+    replace=True
+)
+```
+
+The detailed docstring is critical—**it helps both agents and humans understand when and how to use each tool**. Clear documentation of expected inputs, outputs, and use cases dramatically improves agent tool selection accuracy.
+
+### Automatic authentication passthrough
+
+One of Unity Catalog's most powerful features for agent deployment is **automatic authentication passthrough**. When you declare resource dependencies during agent logging, Databricks automatically provisions short-lived OAuth tokens and rotates them without manual intervention.
+
+```python
+from mlflow.models.resources import (
+    DatabricksServingEndpoint,
+    DatabricksVectorSearchIndex
+)
+
+with mlflow.start_run():
+    mlflow.pyfunc.log_model(
+        python_model=agent_path,
+        artifact_path="agent",
+        resources=[
+            DatabricksServingEndpoint(
+                endpoint_name="databricks-meta-llama-3-3-70b-instruct"
+            ),
+            DatabricksVectorSearchIndex(
+                index_name="prod.agents.databricks_docs_index"
+            )
+        ]
+    )
+```
+
+Supported resources include SQL Warehouses, Model Serving endpoints, Unity Catalog Functions, Genie spaces, Vector Search indexes, and Unity Catalog Tables. **Each resource type requires specific permissions**: USE ENDPOINT for warehouses, CAN QUERY for endpoints, EXECUTE for functions, and so on. Additionally, all Unity Catalog resources require USE CATALOG and USE SCHEMA on parent containers.
+
+This approach eliminates credential management headaches while maintaining security. The system creates a service principal for each agent version and grants read access only to declared resources.
+
+### Lineage and audit capabilities
+
+Unity Catalog automatically captures lineage throughout the agent lifecycle. **When models are trained on UC tables, lineage flows from data through models to agent executions**. This traceability is essential for compliance, debugging, and understanding model behavior.
+
+MLflow's `log_input()` function explicitly tracks table-to-model lineage:
+
+```python
+with mlflow.start_run():
+    dataset = mlflow.data.from_spark(
+        training_df, 
+        table_name="catalog.schema.training_table"
+    )
+    mlflow.log_input(dataset, context="training")
+    
+    model = train_model(training_df)
+    mlflow.sklearn.log_model(model, "model")
+```
+
+Audit logs capture all data access through Unity Catalog System Tables. **Query these tables to understand who accessed which datasets, when, and for what purpose**:
+
+```sql
+SELECT * FROM system.access.audit
+WHERE request_params.full_name_arg LIKE 'catalog.schema.%'
+  AND service_name = 'unityCatalog'
+ORDER BY event_time DESC;
+```
+
+For agents specifically, inference tables capture all requests and responses, Review App feedback is logged to UC tables, service principal actions are tracked, and API access through UC Connections is fully audited.
+
+## AI Gateway for centralized model governance
+
+Mosaic AI Gateway provides **centralized governance, monitoring, and management for all generative AI models and agents** within organizations. As a generally available service (June 2025), it brings production readiness to model serving endpoints through unified access control, security features, and observability.
+
+### Core gateway capabilities
+
+AI Gateway supports multiple model types with consistent governance: **external models from OpenAI, Anthropic, AWS Bedrock, and others; provisioned throughput for Foundation Model APIs; pay-per-token pre-configured endpoints; custom models via Model Serving; and deployed AI agents with MLflow traces**.
+
+The feature matrix shows comprehensive coverage: permission and rate limiting work across all model types, payload logging and usage tracking support all endpoints (with caveats for route-optimized custom models), AI Guardrails support external models and Foundation Model APIs, fallbacks work for external models, and traffic splitting supports most endpoint types.
+
+Importantly, **many core features are free**: query permissions, rate limiting, fallbacks, and traffic splitting. Paid features include payload logging and usage tracking, though pricing is subject to change with new releases.
+
+### Configuring AI Gateway for agents
+
+When deploying agents via the `agents.deploy()` API, **inference tables are enabled automatically**. This automatic configuration logs all requests, responses, MLflow traces, and Review App feedback to Unity Catalog Delta tables.
+
+For programmatic configuration via REST API:
+
+```python
+from mlflow.deployments import get_deploy_client
+
+client = get_deploy_client("databricks")
+client.create_endpoint(
+    name="agent-endpoint",
+    config={
+        "served_entities": [{
+            "external_model": {
+                "name": "custom-model",
+                "provider": "custom",
+                "task": "llm/v1/chat",
+                "custom_provider_config": {
+                    "custom_provider_url": "https://my-provider.com",
+                    "api_key_auth": {
+                        "key": "X-API-KEY",
+                        "value": "{{secrets/scope/key}}"
+                    }
+                }
+            }
+        }],
+        "ai_gateway": {
+            "usage_tracking_config": {"enabled": True},
+            "inference_table_config": {
+                "enabled": True,
+                "catalog_name": "main",
+                "schema_name": "monitoring",
+                "table_name_prefix": "agent"
+            },
+            "rate_limits": [{
+                "key": "user",
+                "renewal_period": "minute",
+                "calls": 100
+            }]
+        }
+    }
+)
+```
+
+Configuration updates typically take **20-40 seconds, with rate limiting updates requiring up to 60 seconds**.
+
+### Rate limiting and security features
+
+AI Gateway provides **five types of rate limits**: endpoint-level for overall traffic, user-default for users without specific limits, specific user for individual users, service principal for automated systems, and user group for shared limits across teams.
+
+Rate limits can be specified as **QPM (queries per minute) or TPM (tokens per minute)**, providing flexibility for different use cases. When limits are exceeded, the system returns 429 errors which can trigger automatic fallbacks if configured.
+
+AI Guardrails (Public Preview) provide critical safety features. **Built with Meta Llama Guard 2-8b**, safety filtering prevents interaction with violent crime, self-harm, hate speech, and harassment content. PII detection uses pre-trained models to identify credit card numbers, social security numbers, phone numbers, and addresses, with options to block or mask detected information.
+
+An important note: **after May 30, 2025, topic moderation and keyword filtering guardrails are deprecated**. Custom guardrails are available in Private Preview for organizations needing specialized content filtering.
+
+### Monitoring with inference tables
+
+AI Gateway creates **three table types for comprehensive monitoring**: payload tables with raw JSON requests and responses, payload request logs with formatted requests and MLflow traces, and payload assessment logs capturing user feedback from Review App.
+
+The payload table schema includes critical fields for analysis:
+
+```sql
+SELECT 
+    databricks_request_id,
+    timestamp_ms,
+    status_code,
+    execution_duration_ms,
+    request,
+    response,
+    invoked_by
+FROM catalog.schema.agent_endpoint_payload
+WHERE date >= current_date() - 7
+ORDER BY timestamp_ms DESC;
+```
+
+Data availability varies by endpoint type. **Foundation Model APIs, external models, and agents log within 1 hour (best effort), while custom models log approximately within 2 hours**.
+
+For comprehensive usage analysis, join inference tables with System Tables:
+
+```sql
+SELECT * FROM system.serving.endpoint_usage AS usage
+JOIN (
+  SELECT DISTINCT(served_entity_id) AS entity_id
+  FROM catalog.schema.inference_table
+) inference
+ON inference.entity_id = usage.served_entity_id;
+```
+
+Custom usage context enables **cost attribution and chargeback capabilities**:
+
+```python
+response = client.chat.completions.create(
+    model="endpoint-name",
+    messages=[{"role": "user", "content": "Query"}],
+    extra_body={
+        "usage_context": {
+            "project": "customer_support",
+            "cost_center": "operations",
+            "priority": "high"
+        }
+    }
+)
+```
+
+The usage_context map (maximum 10 KiB) flows through to System Tables, enabling precise cost tracking and organizational chargeback systems.
+
+## Databricks Asset Bundles for deployment automation
+
+Databricks Asset Bundles (DABs) represent **Infrastructure-as-Code for data and AI projects**, generally available since April 2024. They enable software engineering best practices—source control, code review, testing, and CI/CD—for agent deployments.
+
+### What are Asset Bundles
+
+A bundle packages **cloud infrastructure, workspace configurations, source files, resource definitions, tests, and deployment targets** as a single deployable unit. This approach ensures version control, consistent deployments, and reproducible infrastructure across environments.
+
+DABs are ideal when you need **multi-contributor collaboration, CI/CD automation, organizational standards enforcement, regulatory compliance with versioned history, or ML projects requiring production best practices from inception**.
+
+### Bundle structure for agents
+
+A complete bundle for agent deployment includes:
+
+```yaml
+bundle:
+  name: agent-deployment-bundle
+  
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+variables:
+  catalog_name:
+    description: "Unity Catalog name"
+  model_name:
+    description: "Agent model name"
+
+resources:
+  experiments:
+    agent_experiment:
+      name: /Workspace/Users/${workspace.current_user.userName}/agent_experiments
+      permissions:
+        - level: CAN_READ
+          group_name: users
+  
+  registered_models:
+    agent_model:
+      name: ${var.catalog_name}.agents.${var.model_name}
+      catalog_name: ${var.catalog_name}
+      schema_name: agents
+      comment: "Production agent model"
+      grants:
+        - privileges: [EXECUTE]
+          principal: account users
+  
+  model_serving_endpoints:
+    agent_endpoint:
+      name: ${var.model_name}-endpoint
+      config:
+        served_entities:
+          - entity_name: ${resources.registered_models.agent_model.name}
+            entity_version: "latest"
+            workload_size: "Small"
+            scale_to_zero_enabled: True
+      permissions:
+        - level: CAN_QUERY
+          group_name: users
+
+targets:
+  dev:
+    mode: development
+    default: True
+    variables:
+      catalog_name: dev
+      model_name: my_agent_dev
+    workspace:
+      host: https://dev-workspace.databricks.com
+  
+  staging:
+    mode: development
+    variables:
+      catalog_name: staging
+      model_name: my_agent_staging
+    workspace:
+      host: https://staging-workspace.databricks.com
+  
+  prod:
+    mode: production
+    variables:
+      catalog_name: prod
+      model_name: my_agent
+    workspace:
+      host: https://prod-workspace.databricks.com
+    run_as:
+      service_principal_name: "agent-deployer-sp"
+    git:
+      branch: main
+```
+
+This configuration demonstrates **environment-specific variables, resource dependencies, automatic permission management, and deployment mode controls**.
+
+### Deployment modes and behavior
+
+DABs provide two deployment modes with distinct behaviors. **Development mode** (mode: development) automatically prepends `[dev ${user}]` to resource names, tags jobs with 'dev', sets `development: true` on DLT pipelines, pauses all schedules and triggers, enables concurrent runs, allows compute overrides, and disables deployment locks for rapid iteration.
+
+**Production mode** (mode: production) enforces stricter controls: validates pipelines have `development: false`, validates Git branch matches specifications, requires service principal usage via `run_as`, validates artifact paths aren't overridden, requires both `run_as` and `permissions`, disallows compute overrides, and enables deployment locks to prevent concurrent modifications.
+
+These automatic behaviors **reduce configuration burden while enforcing best practices**. Development mode optimizes for iteration speed, while production mode prioritizes safety and compliance.
+
+### MLOps deployment pattern: Deploy code, not models
+
+Databricks strongly recommends **deploying code rather than model artifacts**. This pattern means code is promoted from dev to staging to prod, with agents trained in each environment using environment-appropriate data.
+
+Benefits include comprehensive code review and testing for all changes, production agents trained on production code and data, safer automated retraining workflows, and consistent development processes across teams.
+
+The three-stage architecture proceeds as follows:
+
+**Development stage**: Data scientists develop agent code interactively, experiment with prompts and tools, register to dev catalog, and maintain read-only access to prod data for analysis.
+
+**Staging stage**: ML engineers run integration tests, CI pipeline triggers on pull requests, unit and integration tests execute, registration to staging catalog occurs, and production-like infrastructure validates deployment.
+
+**Production stage**: ML engineers manage the environment, automated CI/CD handles deployment, registration to prod catalog uses aliases for deployment status, Model Serving provides real-time inference, Lakehouse Monitoring tracks performance, and automated retraining ensures model freshness.
+
+### Multi-environment deployment with Unity Catalog
+
+Unity Catalog's three-level namespace **maps naturally to environment isolation**:
+
+```
+dev catalog → Development environment
+staging catalog → Staging environment  
+prod catalog → Production environment
+```
+
+Within each catalog, consistent schema and object names provide predictable structure. **Permissions control access**: data scientists have read-write on dev and read-only on prod; ML engineers manage staging and prod; automated systems use service principals with minimal privileges.
+
+Cross-environment model promotion uses MLflow's copy functionality:
+
+```python
+import mlflow
+mlflow.set_registry_uri("databricks-uc")
+
+src_model_uri = "models:/staging.ml_team.fraud_detection/1"
+dst_model_name = "prod.ml_team.fraud_detection"
+
+copied_version = client.copy_model_version(src_model_uri, dst_model_name)
+
+client.set_registered_model_alias(
+    name="prod.ml_team.fraud_detection",
+    alias="Champion",
+    version=copied_version.version
+)
+```
+
+This pattern **maintains clear boundaries between environments while enabling controlled promotion**.
+
+### Key CLI commands
+
+Essential Databricks CLI commands for bundle management:
+
+```bash
+# Initialize new bundle
+databricks bundle init
+
+# Validate configuration
+databricks bundle validate -t staging
+
+# Deploy to environment
+databricks bundle deploy -t prod
+
+# Run workflow
+databricks bundle run -t prod agent-pipeline
+
+# Destroy deployment
+databricks bundle destroy -t prod --auto-approve
+```
+
+Variables can be set via CLI flags (`--var="catalog=prod,model=agent"`) or environment variables (`export BUNDLE_VAR_catalog=prod`), providing flexibility for different deployment contexts.
+
+## CI/CD implementation patterns
+
+Databricks provides **first-class CI/CD support centered on Asset Bundles** as the recommended deployment mechanism. The platform integrates with GitHub Actions, Azure DevOps, Jenkins, GitLab, and other major CI/CD tools.
+
+### GitHub Actions integration
+
+GitHub Actions offers the most streamlined integration with **official Databricks actions and workload identity federation** for secure, secret-less authentication.
+
+The setup-cli action installs the Databricks CLI:
+
+```yaml
+- uses: databricks/setup-cli@main
+```
+
+A complete development deployment workflow demonstrates the pattern:
+
+```yaml
+name: 'Dev deployment'
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy
+        env:
+          DATABRICKS_TOKEN: ${{ secrets.SP_TOKEN }}
+          DATABRICKS_BUNDLE_ENV: dev
+  
+  validation:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle run validation-job
+        env:
+          DATABRICKS_TOKEN: ${{ secrets.SP_TOKEN }}
+          DATABRICKS_BUNDLE_ENV: dev
+```
+
+Production deployment uses branch protection and environment approvals:
+
+```yaml
+name: 'Production deployment'
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production  # Requires approval
+    steps:
+      - uses: actions/checkout@v3
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy
+        env:
+          DATABRICKS_TOKEN: ${{ secrets.SP_TOKEN }}
+          DATABRICKS_BUNDLE_ENV: prod
+```
+
+### Workload identity federation
+
+The most secure authentication method is **workload identity federation**, which eliminates long-lived secrets entirely:
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  DATABRICKS_AUTH_TYPE: github-oidc
+  DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+
+steps:
+  - uses: actions/checkout@v3
+  - uses: databricks/setup-cli@main
+  - run: databricks bundle deploy
+```
+
+Configuration requires creating a federation policy in Databricks:
+
+```bash
+databricks account service-principal-federation-policy create <sp-id> --json '{
+  "oidc_policy": {
+    "issuer": "https://token.actions.githubusercontent.com",
+    "audiences": ["https://github.com/my-org"],
+    "subject": "repo:my-org/my-repo:environment:prod"
+  }
+}'
+```
+
+This approach provides **automatic token refresh, no secret rotation, and the highest security posture**.
+
+### Agent deployment automation
+
+A complete agent deployment pipeline includes training, validation, and deployment steps:
+
+```yaml
+resources:
+  jobs:
+    agent_mlops_pipeline:
+      name: ${bundle.target}-agent-pipeline
+      tasks:
+        - task_key: register_agent
+          notebook_task:
+            notebook_path: ./src/register_agent.py
+          libraries:
+            - pypi:
+                package: databricks-agents
+                
+        - task_key: validate_agent
+          depends_on:
+            - task_key: register_agent
+          notebook_task:
+            notebook_path: ./src/validate_agent.py
+          parameters:
+            model_uri: "{{tasks.register_agent.values.model_uri}}"
+            
+        - task_key: deploy_agent
+          depends_on:
+            - task_key: validate_agent
+          notebook_task:
+            notebook_path: ./src/deploy_agent.py
+```
+
+The validation step performs critical quality gates:
+
+```python
+def validate_agent(model_uri):
+    agent = mlflow.pyfunc.load_model(model_uri)
+    
+    # Format validation
+    assert hasattr(agent, 'predict')
+    
+    # Metadata validation
+    model_info = mlflow.models.get_model_info(model_uri)
+    assert model_info.signature is not None
+    
+    # Functional testing
+    test_queries = ["Test query 1", "Test query 2"]
+    for query in test_queries:
+        response = agent.predict({"messages": [{"role": "user", "content": query}]})
+        assert response is not None
+    
+    # Performance testing
+    start = time.time()
+    agent.predict({"messages": [{"role": "user", "content": "test"}]})
+    latency = time.time() - start
+    assert latency < 30.0
+    
+    # Set Challenger alias if validation passes
+    client = mlflow.tracking.MlflowClient()
+    client.set_registered_model_alias(
+        model_uri.split("/")[1], 
+        "Challenger", 
+        model_info.version
+    )
+    
+    return True
+```
+
+Deployment automatically promotes validated agents:
+
+```python
+def deploy_agent(model_uri, endpoint_name):
+    client = mlflow.tracking.MlflowClient()
+    model_name = model_uri.split("/")[1]
+    
+    challenger = client.get_model_version_by_alias(model_name, "Challenger")
+    
+    deployment = agents.deploy(
+        model_name=model_name,
+        model_version=challenger.version,
+        endpoint_name=endpoint_name,
+        scale_to_zero_enabled=True
+    )
+    
+    # Promote to Champion
+    client.set_registered_model_alias(
+        model_name, 
+        "Champion", 
+        challenger.version
+    )
+    
+    return deployment.query_endpoint
+```
+
+This Champion/Challenger pattern provides **safe production rollouts with easy rollback capability**.
+
+### Testing and validation strategies
+
+Comprehensive testing includes multiple layers. **Unit testing** uses pytest for Python business logic, ScalaTest for Scala code, and JUnit for Java components, testing individual functions in isolation.
+
+**Integration testing** validates complete workflows and data pipelines, uses the chispa library for Spark DataFrame testing, validates end-to-end flows, and tests agent interactions with dependencies.
+
+**Validation testing** runs `databricks bundle validate` for YAML syntax and configuration, performs schema validation for data pipelines, tests notebook functionality, and executes agent quality evaluation using the Agent Evaluation framework.
+
+For agents specifically, **MLflow Agent Evaluation provides systematic quality assessment**:
+
+```python
+import pytest
+from databricks.agents import ChatAgent
+
+def test_agent_response():
+    agent = MyAgent()
+    messages = [{"role": "user", "content": "Test query"}]
+    response = agent.predict(messages)
+    assert response is not None
+    assert len(response.messages) > 0
+```
+
+Quality gates block deployment on validation failures, require passing tests before merge, enable automated rollback on critical errors, and implement performance threshold monitoring.
+
+## Evaluation and monitoring for production agents
+
+Databricks emphasizes that **"you cannot responsibly deploy an AI agent if you can't measure whether it produces high-quality responses at scale."** The platform provides comprehensive evaluation and monitoring capabilities to ensure agent quality throughout the lifecycle.
+
+### Synthetic evaluation dataset generation
+
+Agent Evaluation includes tools for generating evaluation datasets from your enterprise data. **This represents the GenAI equivalent of software test suites**, providing systematic quality benchmarks.
+
+```python
+from databricks.agents.evals import generate_evals_df
+
+agent_description = """
+The agent is a RAG chatbot that answers questions about Databricks.
+"""
+
+question_guidelines = """
+# User personas
+- A developer new to Databricks
+- An experienced Data Scientist or Data Engineer
+
+# Example questions
+- What API lets me parallelize operations over rows of a delta table?
+- Which cluster settings give best performance with Spark?
+"""
+
+evals = generate_evals_df(
+    docs=parsed_docs_df,
+    num_evals=25,
+    agent_description=agent_description,
+    question_guidelines=question_guidelines,
+)
+```
+
+The generated dataset includes **diverse, domain-specific questions with ground truth answers** derived from your actual data. This approach ensures evaluation relevance to real-world usage patterns.
+
+### Built-in AI judges
+
+MLflow provides **LLM-as-judge evaluation metrics** that assess agent quality without manual review:
+
+```python
+with mlflow.start_run(run_name="my_agent"):
+    eval_results = mlflow.evaluate(
+        data=evals,
+        model=model_info.model_uri,
+        model_type="databricks-agent",
+    )
+```
+
+Built-in metrics include **accuracy, hallucination detection, harmfulness, helpfulness, retrieval groundedness, and relevance**. These metrics leverage LLMs to assess agent outputs at scale, providing quantitative quality measures.
+
+### Custom evaluation metrics
+
+Organizations can define **domain-specific metrics** aligned with business requirements:
+
+```python
+from databricks.agents.evals import metric
+
+@metric
+def uses_keywords_and_retriever(request, trace):
+    retriever_spans = trace.search_spans(span_type="RETRIEVER")
+    keyword_tool_spans = trace.search_spans(name="catalog__schema__tfidf_keywords")
+    return len(keyword_tool_spans) > 0 and len(retriever_spans) > 0
+
+eval_results = mlflow.evaluate(
+    data=evals,
+    model=model_info.model_uri,
+    model_type="databricks-agent",
+    extra_metrics=[uses_keywords_and_retriever],
+)
+```
+
+Custom metrics can assess **tool usage patterns, response formatting, latency requirements, cost constraints, or any other quality dimension** important to your application.
+
+### Continuous monitoring with inference tables
+
+Production monitoring relies on **AI Gateway inference tables** that automatically capture all agent interactions. Three table types provide comprehensive visibility:
+
+**Payload tables** contain raw JSON requests and responses with metadata including request ID, timestamp, status code, execution duration, and user information.
+
+**Payload request logs** provide formatted requests with MLflow traces, enabling detailed analysis of agent decision-making and tool usage patterns.
+
+**Payload assessment logs** capture user feedback from Review App, linking subjective human assessments to specific agent interactions.
+
+Query these tables to identify quality issues:
+
+```sql
+SELECT 
+    request_id,
+    request,
+    response,
+    execution_duration_ms,
+    status_code
+FROM catalog.schema.agent_endpoint_payload_request_logs
+WHERE date >= current_date() - 7
+  AND status_code != 200
+ORDER BY timestamp_ms DESC;
+```
+
+For comprehensive cost and usage analysis, **join inference tables with System Tables**:
+
+```sql
+SELECT 
+    invoked_by,
+    COUNT(*) as request_count,
+    SUM(input_token_count) as total_input_tokens,
+    SUM(output_token_count) as total_output_tokens,
+    AVG(execution_duration_ms) as avg_latency_ms
+FROM system.serving.endpoint_usage
+WHERE endpoint_name = 'my-agent-endpoint'
+  AND date >= current_date() - 30
+GROUP BY invoked_by
+ORDER BY request_count DESC;
+```
+
+### MLflow tracing for debugging
+
+MLflow 3.x provides **real-time trace logging for agent execution**, capturing each step: LLM calls, tool executions, retrieval operations, and orchestration decisions. Traces log to MLflow experiments and inference tables, enabling debugging, performance analysis, and quality monitoring.
+
+Trace information includes **input prompts and parameters, LLM responses and token usage, tool invocations and results, latency metrics per component, and cost tracking per request**. Access traces programmatically:
+
+```python
+traces = spark.table("catalog.schema.agent_payload_request_logs") \
+    .select("trace", "request", "response")
+```
+
+The trace structure enables sophisticated analysis. **Search for specific span types (RETRIEVER, TOOL, LLM), filter by execution time or token usage, identify failure patterns, and correlate outputs with inputs** for systematic debugging.
+
+### Review App for stakeholder feedback
+
+When deploying agents via `agents.deploy()`, the **Review App is automatically enabled**. This provides a web interface where stakeholders—including those without Databricks accounts—can interact with agents and provide structured feedback.
+
+The Review App captures **qualitative assessments that complement quantitative metrics**. Domain experts can flag incorrect responses, suggest improvements, rate response quality, and provide context that automated metrics miss. This feedback flows to payload assessment logs for integration into evaluation workflows.
+
+### Production monitoring workflow
+
+A complete production monitoring workflow proceeds systematically:
+
+1. **Collect problematic traces** from inference tables based on error rates, latency thresholds, or automated quality metrics
+2. **Send to domain experts** via Review App for human assessment
+3. **Sync labels to evaluation dataset** to create regression tests
+4. **Re-evaluate and iterate** on agent design, prompts, or tools
+5. **Deploy improvements** following the same CI/CD pipeline
+
+This creates a **continuous improvement loop where production traffic directly informs agent optimization**.
+
+## Component deployment and configuration management
+
+Deploying complete agent systems requires coordinating multiple components: models, vector stores, retrieval tools, agent logic, and endpoints. Each component has specific deployment patterns and cross-component dependencies.
+
+### Model deployment patterns
+
+Databricks recommends the **"deploy code, not models" pattern** where code is promoted across environments and models are trained in each environment. This ensures production agents use production data and makes automated retraining safer.
+
+Model registration to Unity Catalog follows standard MLflow patterns:
+
+```python
+import mlflow
+mlflow.set_registry_uri("databricks-uc")
+
+with mlflow.start_run():
+    clf = RandomForestClassifier(max_depth=7)
+    clf.fit(X, y)
+    
+    mlflow.sklearn.log_model(
+        sk_model=clf,
+        artifact_path="model",
+        input_example=X.iloc[[0]],
+        registered_model_name="prod.ml_team.iris_model"
+    )
+```
+
+**Model aliases replace stages** for deployment status management:
+
+```python
+from mlflow import MlflowClient
+client = MlflowClient()
+
+# Assign Challenger alias after validation
+client.set_registered_model_alias("prod.ml_team.iris_model", "Challenger", 1)
+
+# Promote to Champion after testing
+client.set_registered_model_alias("prod.ml_team.iris_model", "Champion", 1)
+
+# Load by alias for serving
+model = mlflow.pyfunc.load_model("models:/prod.ml_team.iris_model@Champion")
+```
+
+This pattern provides **flexible deployment workflows without rigid stage transitions**.
+
+### Vector search deployment
+
+Vector Search indexes integrate deeply with Unity Catalog for governance and Delta tables for data. **Two primary index types serve different needs**: delta sync indexes for automatically synchronized data and direct access indexes for externally managed embeddings.
+
+Creating a delta sync index with Databricks-managed embeddings:
+
+```python
+from databricks.vector_search.client import VectorSearchClient
+
+client = VectorSearchClient()
+
+# Create endpoint first
+client.create_endpoint(
+    name="vector_search_endpoint",
+    endpoint_type="STANDARD"  # or "STORAGE_OPTIMIZED"
+)
+
+# Create index
+index = client.create_delta_sync_index(
+    endpoint_name="vector_search_endpoint",
+    source_table_name="catalog.schema.documents",
+    index_name="catalog.schema.docs_index",
+    pipeline_type="TRIGGERED",  # or "CONTINUOUS"
+    primary_key="doc_id",
+    embedding_source_column="text",
+    embedding_model_endpoint_name="databricks-gte-large-en"
+)
+```
+
+**Endpoint types have distinct characteristics**: STANDARD endpoints prioritize low latency (20-50ms) and support up to 320M vectors; STORAGE_OPTIMIZED endpoints handle 1B+ vectors with higher latency (300-500ms) but 7x lower cost per vector.
+
+**Pipeline types affect cost and freshness**: TRIGGERED pipelines require manual sync (`index.sync()`) providing lower cost; CONTINUOUS pipelines auto-sync with seconds latency but provision streaming clusters continuously.
+
+For production RAG agents, **reference vector search indexes as resources**:
+
+```python
+with mlflow.start_run():
+    mlflow.pyfunc.log_model(
+        python_model=RAGAgent(),
+        artifact_path="agent",
+        resources=[
+            "vector_search_index:prod.ml_team.docs_index"
+        ]
+    )
+```
+
+This enables **automatic authentication and governance** for vector search queries.
+
+### Model Serving endpoint deployment
+
+Model Serving endpoints provide **production-ready REST APIs** for agents. Creation follows declarative patterns via UI, API, or Asset Bundles.
+
+Using MLflow Deployments SDK:
+
+```python
+from mlflow.deployments import get_deploy_client
+
+client = get_deploy_client("databricks")
+endpoint = client.create_endpoint(
+    name="agent-endpoint",
+    config={
+        "served_entities": [{
+            "entity_name": "catalog.schema.my-agent",
+            "entity_version": "3",
+            "workload_size": "Small",
+            "scale_to_zero_enabled": True
+        }],
+        "traffic_config": {
+            "routes": [{
+                "served_model_name": "my-agent-3",
+                "traffic_percentage": 100
+            }]
+        }
+    }
+)
+```
+
+**Workload sizes map to capacity**: Small handles 0-4 concurrent requests, Medium handles 8-16, Large handles 16-64. Scale-to-zero reduces costs during idle periods but introduces cold start latency.
+
+For agents, the **recommended deployment approach uses agents.deploy()**:
+
+```python
+from databricks import agents
+
+deployment = agents.deploy(
+    model_name="catalog.schema.my-agent",
+    model_version=3,
+    scale_to_zero_enabled=True
+)
+
+query_endpoint = deployment.query_endpoint
+```
+
+This automatically creates the CPU endpoint, provisions service principal credentials, enables inference tables, enables Review App, enables Lakehouse Monitoring, and enables real-time tracing. **Deployment takes up to 15 minutes; logs are available in 10-30 minutes.**
+
+### Secrets and credential management
+
+Databricks Secrets provide **secure credential storage** with automatic redaction in logs and outputs. Create secret scopes to organize credentials:
+
+```bash
+databricks secrets create-scope prod-secrets
+```
+
+Add secrets to scopes:
+
+```bash
+databricks secrets put-secret --json '{
+  "scope": "prod-secrets",
+  "key": "api-key",
+  "string_value": "sk-..."
+}'
+```
+
+Reference secrets in code:
+
+```python
+api_key = dbutils.secrets.get(scope="prod-secrets", key="api-key")
+```
+
+In Model Serving endpoint configurations, **reference secrets with {{secrets/scope/key}} syntax**:
+
+```python
+{
+    "served_entities": [{
+        "entity_name": "catalog.schema.model",
+        "entity_version": "1",
+        "environment_vars": {
+            "API_KEY": "{{secrets/prod-secrets/api-key}}"
+        }
+    }]
+}
+```
+
+**Unity Catalog Connections** (Public Preview) provide even better credential management. IT teams centrally manage API credentials, developers use pre-approved connections without accessing tokens, all API access is audited, and credential distribution is prevented.
+
+### Configuration management across environments
+
+Environment-specific configuration uses **variables in Asset Bundles**:
+
+```yaml
+variables:
+  catalog:
+    description: "Unity Catalog name"
+  schema:
+    description: "Schema name"
+  embedding_endpoint:
+    description: "Embedding model endpoint"
+
+targets:
+  dev:
+    variables:
+      catalog: dev
+      schema: ml_team
+      embedding_endpoint: dev-embeddings
+  
+  prod:
+    variables:
+      catalog: prod
+      schema: ml_team
+      embedding_endpoint: prod-embeddings
+```
+
+Load configuration in code:
+
+```python
+import yaml
+import os
+
+env = os.getenv("ENVIRONMENT", "dev")
+with open(f"config/{env}.yaml") as f:
+    config = yaml.safe_load(f)
+
+model_name = f"{config['catalog']}.{config['schema']}.{config['model_name']}"
+```
+
+This pattern **externalizes environment differences while maintaining consistent code**.
+
+### Cross-component references
+
+Agent systems require careful orchestration of dependencies. **Agents reference vector search, which references embedding models, which reference Unity Catalog tables**. Each reference requires proper authentication and configuration.
+
+A complete multi-component agent demonstrates integration:
+
+```python
+class CompleteAgent(mlflow.pyfunc.PythonModel):
+    def predict(self, context, model_input):
+        # Query vector search for relevant docs
+        vs_client = VectorSearchClient()
+        index = vs_client.get_index("prod.ml_team.docs_index")
+        docs = index.similarity_search(query_text=model_input["query"])
+        
+        # Query SQL warehouse for structured data
+        from databricks.sdk import WorkspaceClient
+        w = WorkspaceClient()
+        sql_result = w.statement_execution.execute_statement(
+            warehouse_id="abc123",
+            statement=f"SELECT * FROM prod.ml_team.data WHERE id = '{model_input['id']}'"
+        )
+        
+        # Call LLM endpoint for generation
+        llm_response = self.llm_client.chat.completions.create(
+            model="databricks-meta-llama-3-70b",
+            messages=self.construct_messages(docs, sql_result, model_input)
+        )
+        
+        return llm_response.choices[0].message.content
+
+# Log with all dependencies
+with mlflow.start_run():
+    mlflow.pyfunc.log_model(
+        artifact_path="complete_agent",
+        python_model=CompleteAgent(),
+        resources=[
+            "vector_search_index:prod.ml_team.docs_index",
+            "sql_warehouse:abc123",
+            "model_serving_endpoint:databricks-meta-llama-3-70b",
+            "unity_catalog_table:prod.ml_team.data"
+        ]
+    )
+```
+
+Declaring resources enables **automatic authentication passthrough** for all dependencies, eliminating manual credential management while maintaining security.
+
+## Advantages and deployment trade-offs
+
+Deploying agents on Databricks provides significant advantages while requiring consideration of trade-offs between different approaches.
+
+### Platform integration advantages
+
+Databricks offers **unified governance architecture** where a single governance layer spans models, tools, and data through Unity Catalog. Centralized credential management via UC Connections means developers never access raw API tokens. Automatic authentication passthrough to downstream resources eliminates manual configuration. Full audit trails support compliance and debugging. Tag-based access control enables dynamic, real-time policy evaluation.
+
+**Native data intelligence** provides direct access to enterprise data without movement or replication. The Lakehouse architecture eliminates data silos with a single source of truth. Delta Lake storage offers ACID transactions and time travel. Mosaic AI Vector Search enables scalable unstructured data retrieval. AI/BI Genie Conversation APIs support natural language querying of structured data.
+
+**Production-ready infrastructure** includes serverless compute with automatic scaling and no infrastructure management. Model Serving provides high availability and low latency (20-50ms for standard endpoints). MLflow integration handles versioning, tracking, and deployment. Inference tables automatically capture requests, responses, and traces.
+
+### Deployment approach comparisons
+
+**Agent Bricks (automated approach)** provides auto-optimization that tunes prompts, retrieval, and system components automatically. Synthetic evaluation generation creates domain-specific benchmarks from your data. Agent Learning from Human Feedback translates natural language guidance into technical optimizations. Continuous improvement means performance improves over time. Customers report **2x accuracy improvements and 90x cost reduction** versus manual approaches. Time to production reduces from weeks to days or hours.
+
+However, Agent Bricks offers **less customization than code-first approaches**, is optimized for specific patterns rather than all architectures, and requires defining tasks and providing feedback data.
+
+**Agent Framework (code-first approach)** provides maximum flexibility with support for LangGraph, LangChain, LlamaIndex, or custom Python. It's framework agnostic, making it easy to evolve designs as applications grow. Developers get full control to customize logic, prompts, and orchestration. MLflow tracing provides automatic structured logging. AI Playground export generates production-ready notebooks with one click.
+
+The trade-offs include **manual optimization and tuning requirements, longer time to production, and need for comprehensive evaluation datasets**.
+
+**AI Playground (prototyping)** enables rapid experimentation without code. Quick LLM and tool selection uses a chat interface. Code generation auto-generates notebooks with LangGraph integration. Evaluation dataset capture logs all sessions for offline iteration. Seamless transition allows export to code for customization or direct deployment.
+
+However, Playground is **limited to supported patterns, requires export to code for advanced features, and isn't suitable for complex architectures**.
+
+### Design pattern trade-offs
+
+**Deterministic chains** offer highest predictability, lower latency, easier testing, and simpler auditing. But they have **limited flexibility, complex maintenance as logic grows, and require refactoring for new capabilities**. Use them when tasks are well-defined, consistency is critical, and minimizing latency matters.
+
+**Single-agent systems** enable dynamic decision making, adapt to varied queries, and represent the "sweet spot for enterprise use cases." They **require guards against invalid tool calls, need careful prompt design, and have potential for loops**. Use them for cohesive domains, varied queries, and when flexibility matters without multi-agent complexity.
+
+**Multi-agent systems** provide modular development, handle large enterprise workflows, and facilitate specialized reasoning. But they add **routing complexity, debugging overhead, amplified infinite loop risks, and coordination challenges**. Use them only for distinct skill sets, when too many tools exist for single agents, or when reflection/critique patterns are needed.
+
+### Known limitations and workarounds
+
+**Serverless compute must be enabled** for Unity Catalog function execution as agent tools. The workaround is enabling serverless in workspace settings—it's required for production deployments anyway.
+
+**Function-calling models are required** for agent orchestration. Supported models include Llama 3.1-70B, GPT-4o, and other function-calling capable models from Foundation Model API or registered external models.
+
+**Cold start latency** affects endpoints that scale to zero, potentially delaying responses by several minutes during idle periods. The workaround is **avoiding scale-to-zero for production**; use provisioned throughput or keep endpoints warm instead.
+
+**Infinite loop risks** exist when tool-calling agents lack proper constraints. Mitigation strategies include setting iteration limits on agent loops, implementing timeouts on LLM and tool calls, defining clear termination conditions, using fallback logic for repeated failures, and monitoring traces for looping patterns.
+
+**PAT performance issues** are significant: Personal Access Tokens introduce network overhead and "hundreds of milliseconds" of latency, significantly reducing QPS capacity. The strong recommendation is **using service principals with OAuth tokens for production deployments**.
+
+### Scalability considerations
+
+**Serverless Model Serving** automatically scales up and down to meet demand changes without manual provisioning. It eliminates infrastructure management overhead with built-in cost efficiency from pay-per-use pricing. High availability includes built-in redundancy and failover mechanisms.
+
+**Vector Search scaling** varies by SKU: Standard SKU handles up to 320M vectors (2M per VSU) with 20-50ms latency and 30-200+ QPS; Storage-optimized SKU handles up to 1B vectors (64M per VSU) with 300-500ms latency and 30-50 QPS but costs up to 7x less. Scaling strategies include splitting indexes across endpoints for distributed traffic, replicating indexes across endpoints for linear QPS gains, and keeping indexes within single VSU when possible for best performance.
+
+### Cost optimization strategies
+
+**Compute resource optimization** starts with choosing the right type. Job compute costs significantly less than all-purpose compute for non-interactive workloads. SQL warehouses are most cost-efficient for interactive SQL. Serverless services (SQL and Model Serving) start and scale in seconds, terminating idle resources automatically.
+
+**Instance selection matters**: latest generations almost always provide performance benefits and better price-performance. Match instance families to workload characteristics: memory optimized for ML and heavy shuffle, compute optimized for streaming and maintenance jobs, storage optimized when caching benefits apply, GPU optimized only when necessary given significantly higher cost.
+
+**Agent-specific optimization** achieved through Agent Bricks includes 90x cheaper operation through automated prompt optimization. Open-source models like GPT-OSS-120B with automated optimization achieve "order of magnitude lower costs." Agent Bricks identifies lower-cost options that perform just as well. MLflow judges reduce evaluation costs by 95% with token-based pricing.
+
+**Design pattern impacts cost**: deterministic chains typically have lower latency from fewer LLM calls for orchestration. Single-agent systems balance flexibility with cost efficiency. Multi-agent systems require overhead for logging, tracing, and debugging across multiple endpoints. Each additional LLM or tool call increases token usage and response time.
+
+### Security and governance recommendations
+
+**Unity Catalog provides unified governance** managing data, models, tools, and agents collectively. Hierarchical enforcement applies policies at catalog, schema, and table levels with automatic inheritance. Centralized management handles access at scale without individual privilege assignment. Dynamic evaluation determines access in real time based on tags and user context.
+
+**Mosaic AI Gateway** centralizes model access with unified control for all foundation models. Custom provider support registers LLMs from custom proxies or alternate providers. Traffic fallbacks provide automatic failover across providers, regions, and resources. Comprehensive monitoring tracks usage across all providers, monitors agent quality in production, implements automatic payload logging for compliance, and enables unified cost attribution.
+
+**Unity Catalog Connections and Functions** enable IT teams to centrally manage all API credentials while developers use pre-approved connections as tools without accessing tokens. Full audit trails track all API access through UC Connections. Sandboxed execution provides isolation preventing malicious code interference.
+
+## Production deployment best practices
+
+Deploying agents to production requires systematic preparation, monitoring, and continuous improvement processes.
+
+### Pre-deployment checklist
+
+**Infrastructure setup** requires enabling serverless compute for Unity Catalog function execution, configuring service principals with OAuth tokens (not PATs), setting up budgets and alerts for cost monitoring, and implementing a tagging strategy with Business Unit, Project, and Environment tags.
+
+**Agent configuration** includes enabling MLflow trace autologging for debugging, adding timeouts and token limits to LLM calls, logging resources with agents for automatic authentication, ensuring tool documentation clearly specifies inputs and outputs, and implementing error handling and fallback logic.
+
+**Evaluation framework** requires creating domain-specific evaluation sets (human-labeled preferred), defining success criteria aligned with business objectives, configuring LLM judges or enabling Agent Bricks evaluation, establishing baseline performance metrics, and implementing change tracking systems for regression detection.
+
+### Monitoring and observability
+
+**Inference tables** automatically capture traces when using agents.deploy(). **System tables** provide cost and usage monitoring. **Custom dashboards** visualize agent performance metrics. **Alerts** trigger on quality degradation or errors. **PII handling procedures** must be documented and implemented.
+
+Query patterns enable systematic analysis:
+
+```sql
+-- Identify problematic requests
+SELECT 
+    request_id,
+    request,
+    response,
+    execution_duration_ms
+FROM catalog.schema.agent_endpoint_payload_request_logs
+WHERE date >= current_date() - 7
+  AND (status_code != 200 OR execution_duration_ms > 30000)
+ORDER BY timestamp_ms DESC;
+
+-- Track usage by user
+SELECT 
+    invoked_by,
+    COUNT(*) as request_count,
+    AVG(execution_duration_ms) as avg_latency,
+    SUM(input_token_count + output_token_count) as total_tokens
+FROM system.serving.endpoint_usage
+WHERE endpoint_name = 'agent-endpoint'
+  AND date >= current_date() - 30
+GROUP BY invoked_by;
+```
+
+### Continuous improvement workflow
+
+Production agents benefit from **systematic improvement loops**: collect problematic traces from inference tables based on error rates, latency thresholds, or quality metrics; send to domain experts via Review App for human assessment; sync labels to evaluation datasets creating regression tests; re-evaluate and iterate on agent design, prompts, or tools; deploy improvements following the same CI/CD pipeline.
+
+This creates **continuous optimization where production traffic directly informs development**.
+
+### Champion/Challenger promotion pattern
+
+Safe production rollouts use the **Champion/Challenger pattern with model aliases**:
+
+```python
+def promote_if_better(model_name: str):
+    client = mlflow.tracking.MlflowClient()
+    
+    champion = client.get_model_version_by_alias(model_name, "Champion")
+    challenger = client.get_model_version_by_alias(model_name, "Challenger")
+    
+    # Run A/B comparison
+    eval_results = run_comparative_evaluation(
+        champion_version=champion.version,
+        challenger_version=challenger.version
+    )
+    
+    # Promote if better
+    if eval_results["challenger_score"] > eval_results["champion_score"]:
+        client.set_registered_model_alias(
+            model_name, 
+            "Champion", 
+            challenger.version
+        )
+        update_serving_endpoint(model_name, challenger.version)
+        print(f"Promoted Challenger v{challenger.version}")
+```
+
+This approach provides **controlled testing before production promotion with easy rollback if issues arise**.
+
+### Critical success factors
+
+Several factors determine deployment success. **Evaluation first** is paramount: "You cannot responsibly deploy an AI agent if you can't measure whether it produces high-quality responses at scale." **Start simple** by building straightforward chains first and gradually adding complexity. **Unified governance** through Unity Catalog provides a single governance layer for all data, models, tools, and agents. **Serverless by default** leverages automatic scaling, reduces costs, and eliminates management overhead. **Continuous monitoring** from day one enables MLflow tracing, inference tables, and system tables.
+
+### Common pitfalls to avoid
+
+**Generic benchmarks** like MMLU don't validate enterprise performance. **PAT usage** in production significantly reduces QPS capacity—use service principals instead. **Premature multi-agent** architecture adds unnecessary complexity when single agents suffice. **Scale-to-zero in production** introduces cold start delays of several minutes. **Ignoring evaluation** with "vibe checks" is insufficient for production systems.
+
+### Future-proofing strategies
+
+**Version pinning** addresses how "LLM behaviors shift when providers update models"—use version pinning and regression tests. **Modular design** leverages how Agent Framework is "agnostic of pattern," making it easy to evolve requirements. **Tag everything from the beginning** since you cannot add tags to historical data. **Continuous learning** through Agent Bricks and continuous evaluation enables systems that improve over time. **Cost optimization** is an "ongoing process" requiring regular revisiting as new projects and usage patterns emerge.
+
+## Conclusion
+
+Deploying production-grade agent-based pipelines on Databricks combines Infrastructure-as-Code through Asset Bundles, unified governance via Unity Catalog, comprehensive evaluation and monitoring frameworks, and tight integration with the broader Databricks ecosystem. The platform enables teams to build sophisticated agent systems with enterprise-grade security, scalability, and continuous improvement capabilities.
+
+The key architectural patterns—deploy code not models, use Unity Catalog for multi-environment isolation, implement comprehensive evaluation from the start, leverage automatic authentication passthrough, and establish continuous monitoring—provide a foundation for reliable agent deployments. Whether using the automated Agent Bricks approach for rapid deployment or the code-first Agent Framework for maximum flexibility, Databricks provides the tools and best practices for successfully bringing agents from development through production.
+
+Organizations following these patterns report significant improvements: 2x accuracy gains, 90x cost reductions, and dramatically faster time to production. By combining proper evaluation methodologies, systematic deployment processes, and continuous monitoring, teams can deploy agents that not only meet initial quality requirements but continuously improve through production feedback loops.

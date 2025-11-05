@@ -138,25 +138,33 @@ Fine-tuning embeds domain-specific knowledge directly into model weights, elimin
 
 ### Operational Complexity of Data Integration
 
-Integrating proprietary data introduces significant operational complexity:
+Integrating proprietary data transforms agents from generic tools into domain specific systems, but introduces operational challenges that require active management:
 
-| Challenge | Impact on AgentOps |
-|---|---|
-| **Data freshness** | Requires indexing pipelines, update triggers, and cache invalidation |
-| **Access control** | Need fine-grained permissions and data governance policies |
-| **Quality assurance** | Must validate, clean, and version data sources |
-| **Retrieval performance** | Quickly finding relevant documents from large corpuses in real time |
-| **Compliance** | Ensuring data usage adheres to regulations (GDPR, HIPAA, etc.) |
+**Data freshness** becomes critical when agents rely on current information. Customer records update, documentation changes, and inventory shifts; if your agent retrieves stale data, it provides incorrect answers. This requires automated indexing pipelines that detect changes, update triggers that refresh embeddings in real-time, cache invalidation strategies, and monitoring to alert when data becomes outdated.
+
+**Access control** must enforce that agents only access data appropriate for each user's permissions. A support agent querying customer data shouldn't see financial records, and agents serving external users shouldn't access internal documents. This demands row-level security policies, attribute-based access control (ABAC) that considers user attributes and data sensitivity, integration with corporate identity providers, and comprehensive audit logging.
+
+**Quality assurance** directly impacts agent reliability. Poor data quality like inconsistent formatting, missing fields or outdated information, leads to poor agent outputs. Teams need data validation frameworks to catch quality issues before indexing, schema evolution management as data structures change, versioning of data sources to track what data was used for which agent version, and regression testing to verify agents still work correctly when data changes.
+
+**Retrieval performance** affects user experience and agent capability. Searching millions of documents in real-time requires optimized indexes (often vector indexes for semantic search), strategic caching of frequently-accessed data, query performance monitoring to detect slow retrievals, and sometimes pre-computing embeddings or summaries to reduce runtime overhead.
+
+**Compliance** constrains how data can be used in agent systems. Regulations like GDPR, HIPAA, and industry-specific requirements mandate data lineage tracking (knowing exactly which data influenced which agent response), PII detection and redaction to prevent leaking sensitive information, geographic data residency controls, retention policies that govern how long data can be stored, and comprehensive audit trails for regulatory reporting.
+
+These challenges compound when combining multiple data sources or supporting multiple agents accessing shared data. A mature AgentOps practice treats data integration not as a one-time setup task, but as an ongoing operational concern requiring dedicated tooling, monitoring, and governance processes.
 
 ## Agent Ops Anti-patterns
 
+Building effective agent systems requires avoiding common architectural and operational mistakes that seem reasonable in theory but create problems in practice. These anti-patterns typically stem from overengineering solutions, ignoring simpler alternatives, or failing to implement proper operational controls. The following patterns represent lessons learned from production deployments.
+
 ### Starting Too Broad
+Broad, undefined scopes lead to unclear success criteria, difficult evaluation, and agents that perform poorly across all domains rather than excelling in one. Start narrow, prove value, then expand deliberately.
 
 ❌ **Bad**: "Build an internal chatbot that answers every possible employee question"
 
 ✅ **Good**: "Build an agent that helps with IT support ticket triage"
 
 ### Over-Complex Architecture
+Multi-agent systems introduce orchestration overhead, debugging complexity, and potential infinite loops between agents. Use them only when you need parallel execution, role specialization, or truly independent decision-making. If your workflow is predictable and sequential, a chain is simpler, faster, and more reliable.
 
 ❌ **Bad**: Supervisor agents managing sub-agents when a simple chain would work
 
@@ -185,6 +193,7 @@ graph LR
 ```
 
 ### ReAct Loop for Single-Tool Tasks
+ReAct (Reason-Act-Observe) loops add latency and cost for tasks where the action is predetermined. Reserve reasoning loops for situations with genuine uncertainty about next steps.
 
 ❌ **Bad**: Using a Reason→Act loop when one deterministic call would do
 
@@ -203,23 +212,14 @@ return format_status(status)
 ```
 
 ### Overcomplicated Tools
+Text-to-SQL and other LLM-powered tools introduce latency, unpredictability, and potential security risks when a parameterized query would suffice. Use LLMs to generate or select tool parameters only when the mapping from user intent to parameters genuinely requires reasoning.
 
 ❌ **Bad**: e.g., Text-to-SQL when you always need the same query with a single filter field.
 
 ✅ **Good**: Parameterized or stored query with allowlisted inputs
 
-### Overcomplicated Retrieval
-
-❌ **Bad**: Vector search/similarity for a simple typo-tolerant lookup
-
-✅ **Good**: Prefer lightweight fuzzy/FTS options where sufficient
-
-- `LIKE` / `ILIKE` contains searches
-- Trigram indexes
-- Levenshtein distance
-- Native full-text search
-
 ### Unoptimized Retrieval
+Retrieval quality directly impacts agent performance, but teams often accept the first RAG implementation without measuring or optimizing it. Systematic measurement of retrieval relevance, groundedness, and citation quality reveals opportunities to dramatically improve results through better chunking, hybrid search, or reranking.
 
 ❌ **Bad**: Single dense index, oversized chunks, no filters or reranking
 
@@ -229,9 +229,10 @@ return format_status(status)
 - Right-size chunks and overlap
 - Consider hybrid search 
 - Add reranking
-- Evaluate recall/precision and citation coverage regularly
+- Evaluate retrieval relevance, groundedness and citation coverage regularly
 
 ### Ungoverned Tools
+Agents with unrestricted tool access create security, compliance, and reliability risks. Tools need explicit boundaries: what they can access, how long they can run, and how frequently they can be called. Without these controls, a single misbehaving agent can cascade into system-wide failures.
 
 ❌ **Bad**: Agents can call any endpoint or run arbitrary code with broad credentials
 
@@ -242,6 +243,7 @@ return format_status(status)
 - Audit logs and PII redaction for inputs/outputs
 
 ### No Rollback / Versioning
+Agent behavior emerges from the interaction of multiple components—prompts, tools, routing logic, and data sources. Without versioning and the ability to roll back to known-good configurations, debugging production issues becomes nearly impossible. Treat agent configurations as code: version everything, deploy incrementally, and maintain rollback capabilities.
 
 ❌ **Bad**: Shipping unlogged agents you can’t reproduce
 
@@ -252,10 +254,33 @@ return format_status(status)
 - Keep a rollback path when metrics regress
 
 ### No Systematic Evaluation
+Manual testing catches obvious errors but misses edge cases and doesn't scale. Production agents encounter diverse inputs that expose failure modes invisible during development. Build evaluation suites and continuously improve them.
 
 ❌ **Bad**: Playing whack-a-mole with errors as they appear
 
 ✅ **Good**: Comprehensive error characterization and test suites
+
+### No Human-in-the-Loop for High-Stakes Decisions
+
+Agents that autonomously execute high-stakes actions without human oversight create unacceptable risk. Even well tested agents can misinterpret edge cases or encounter novel situations. Critical decisions require human judgment, and agents need clear escalation paths when confidence is low or stakes are high.
+
+❌ **Bad**: Agent autonomously processes refunds, cancels subscriptions, or modifies accounts without approval
+
+✅ **Good**: Agent proposes actions for human approval based on:
+- Transaction value thresholds (e.g., >$1000)
+- Low confidence scores (e.g., <0.8)
+- Sensitive operations (deletions, policy exceptions)
+- Customer escalation requests
+
+### No Cost Controls
+   Agents without per-request budgets or rate limits can generate runaway costs through expensive tool calls, excessive LLM iterations, or unbounded retrieval. A single poorly-formed query or reasoning loop can consume an entire monthly budget.
+   
+   ❌ **Bad**: Agents with unlimited tool calls and no cost tracking
+   
+   ✅ **Good**:
+   - Per-request token budgets and max iterations
+   - Cost monitoring and alerts by agent/user
+   - Circuit breakers for expensive operations
 
 ## Next Steps
 

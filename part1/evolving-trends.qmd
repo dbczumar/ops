@@ -45,13 +45,33 @@ Before examining how agents differ from other AI systems, it's important to unde
 
 ### Ops Maturity Controls by Pattern
 
+As agent architectures grow in complexity, the operational controls required to maintain them must also mature. The table below shows how five critical operational capabilities evolve across different architectural patterns.
+
+1. **Logging & Tracing**: What you need to capture to understand system behavior
+2. **Evaluation Gates**: Tests that must pass before deploying changes
+3. **Governance & Policy**: Controls on who can change what
+4. **Deploy & Rollback**: How you safely release changes
+5. **Monitoring & Alerts**: What to watch in production
+
 | Control | LLM + prompt | Chain (basic RAG) | Tool-calling agent | Multi-agent |
 |---|---|---|---|---|
-| **Logging & tracing** | Single-step trace<br>Prompt I/O, tokens, latency | Stage traces<br>Query, top-k, scores; versions | Step spans<br>Tool I/O, errors, retries/timeouts | Cross-agent root trace<br>Routing, handoffs, shared-state |
-| **Evaluation gates** | Small golden set<br>Correctness, tone, safety | RAG metrics<br>Groundedness, P/R, citations | Task success + side-effects<br>Rollback safety | Per-role + E2E<br>Routes, resolution, escalations, loops |
-| **Governance & policy** | Change review<br>Model/prompt registry | Source policy & approvals<br>Index change control | RBAC + high-risk approvals<br>Change mgmt | Cross-role policies<br>Orchestrator gates. Audit trails |
-| **Deploy & rollback** | Optional canary<br>Quick rollback | Canary on index/prompt change<br>Rollback to last good | Canary routes + trace replay<br>Staged promotion | Orchestrator-level gates<br>Per-agent versioning |
-| **Monitoring & alerts** | Drift basics<br>Rate-limit spikes | Recall & latency drift<br>Index freshness, rate limits | Tool failures/timeouts<br>Quota & rate-limit alerts | Escalation & loop rates<br>Cost/latency by role. Rate-limit hot spots |
+| **Logging & tracing** | Single-step trace (prompt I/O, tokens, latency) | Multi-stage traces (query → retrieval → generation) | Per-tool spans (I/O, errors, retries) | Distributed traces (routing, handoffs, shared state) |
+| **Evaluation gates** | Golden test set (20-100 examples) | RAG metrics (groundedness, citations) | Task success + side-effects testing | Per-agent + end-to-end workflows |
+| **Governance & policy** | Model/prompt change approval | Data source policies and index change control | Role-Based Access Control (RBAC) for tool access | Cross-agent policies and orchestrator gates |
+| **Deploy & rollback** | Optional canary, quick rollback | Canary for index/prompt changes | Canary routes + trace replay | Orchestrator-level gates, per-agent versioning |
+| **Monitoring & alerts** | Response drift, rate limits | Retrieval quality drift, index freshness | Tool failures/timeouts, quota alerts | Escalation rates, loop detection, per-role costs |
+
+**Logging & tracing** evolves from capturing a single request-response pair to tracking complex multi-agent interactions. Simple LLM calls need only basic I/O logging, but multi-agent systems require distributed tracing that follows requests across agent boundaries, capturing routing decisions and state changes.
+
+**Evaluation gates** grow from basic correctness testing to comprehensive workflow validation. While a golden test set suffices for simple prompts, RAG systems need retrieval-specific metrics like groundedness and citation accuracy. Tool-calling agents require testing both task completion and safety (ensuring tools don't cause unintended side-effects), while multi-agent systems demand end-to-end testing of routing logic and escalation paths.
+
+**Governance & policy** progresses from simple change approval to sophisticated access control. Basic systems need prompt versioning, RAG systems add data source governance, tool-calling agents require RBAC to control which tools can be accessed, and multi-agent systems need policies that span multiple agents with comprehensive audit trails.
+
+**Deploy & rollback** capabilities must match system complexity. Simple deployments can use basic canary releases, but as systems grow more complex, you need the ability to replay production traces against new versions, promote through multiple environments, and coordinate versioning across multiple agents.
+
+**Monitoring & alerts** shift from basic health metrics to detecting complex failure modes. Simple systems monitor behavior drift and rate limits, RAG systems add retrieval quality metrics, tool-calling agents track tool execution health, and multi-agent systems must detect emergent problems like infinite loops and escalation bottlenecks.
+
+Notice the progressive sophistication from simple patterns which require simple controls to complex architectures which demand mature operational practices. It's important to match your operational maturity to your architectural complexity.
 
 ## From MLOps to AgentOps
 

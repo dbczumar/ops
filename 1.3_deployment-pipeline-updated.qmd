@@ -1,0 +1,318 @@
+#### Anatomy of a deployment pipeline
+
+[DRAFT lucidchart](https://lucid.app/lucidchart/3c5f3fc1-ad2a-40f6-9f89-74b6dbb1fe14/edit?invitationId=inv_07475903-1de7-457b-88d1-74adfe4f4ba2&page=t3zIPiA-na8H#)
+
+The following sections analyze four deployment architecture patterns for agentic systems, progressing from simple to complex scenarios. Each pattern addresses different organizational needs around agent composition, account isolation, and multi-environment deployment strategies.
+
+##### Pattern 1: Multi-Environment Single-Account Single-Agent View
+
+![AgentOps Multi-Environment Single-Account Single-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Single-Account_Single-Agent_View.png)
+
+**Use Case**: Organizations starting with agentic AI or deploying a single, self-contained agent across development, staging, and production environments within a unified account structure.
+
+**Architecture Characteristics**:
+
+*Application Architecture*
+- Single monolithic agent deployed as a cohesive unit
+- Agent serves a focused use case (e.g., customer support, document analysis)
+- Simple workflow progression: Data Preparation → Agent Development → Automated Evaluation → Deployment
+- Deployment destinations limited to a single app per environment
+
+*Configuration Management*
+- Environment-specific configurations managed through declarative YAML/JSON files
+- Single set of configuration parameters across the pipeline
+- Streamlined configuration: one agent definition, three environment overlays (dev/staging/prod)
+- Model serving endpoints configured per environment with consistent naming conventions
+
+*Infrastructure & Resource Management*
+- Single Unity Catalog metastore shared across all environments
+- Shared lakehouse infrastructure with environment-specific catalog/schema isolation
+- MLflow Tracking Server deployed in each workspace for experiment tracking
+- Delta Sharing configured for data access across environments
+- Common set of supporting resources: Vector Search, AI Tools & Functions, Models tables
+
+*CI/CD Pipeline*
+- Git-driven workflow with single project repository (M1)
+- Automated promotion path: Dev → Staging → Production
+- Environment-specific testing gates:
+  - Unit tests (CI) in Development
+  - Integration tests (CI) in Staging  
+  - Validation tests (CI) in Production
+- SME Human-in-the-loop Feedback loop in Development
+- Continuous Deployment trigger from Production back to Development
+- Batch Inferencing capability in Production for offline evaluation
+
+**Complexity Level**: Low - Single agent, single account, straightforward promotion path
+
+---
+
+##### Pattern 2: Multi-Environment Single-Account Multi-Agent View
+
+![AgentOps Multi-Environment Single-Account Multi-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Single-Account_Multi-Agent_View.png)
+
+**Use Case**: Organizations building composite agentic systems with multiple specialized agents (orchestrator + sub-agents) within a single account, requiring agent composition and inter-agent communication patterns.
+
+**Architecture Characteristics**:
+
+*Application Architecture*
+- Multi-agent composition with clear separation of concerns:
+  - Agent 1: Tool & Function Library (provides shared capabilities)
+  - Agent 2: Tool & Function Library (alternative implementation or specialized tools)
+  - Agent 3: Automated Evaluation (validates agent performance)
+- Microservices-style architecture where each agent is deployed independently
+- Model Serving Endpoint acts as orchestrator for agent interactions
+- Supports both parallel agent execution and sequential agent chaining
+
+*Configuration Management*
+- Multiple YAML/JSON configuration files per agent
+- Shared configuration schemas enforced through Pydantic models
+- Environment-specific overlays for each agent:
+  - Development: rapid iteration with relaxed validation
+  - Staging: integration testing with production-like configs
+  - Production: hardened configurations with strict validation
+- Agent interaction patterns defined in orchestrator configuration
+- Example from telco customer support agent:
+  - [product sub-agent configuration YAML](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/configs/agents/product.yaml#L3)
+  - [product sub-agent LLM pydantic model](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/telco_support_agent/config/schemas.py#L10)
+  - [configuration loaded into `BaseAgent` class](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/telco_support_agent/agents/base_agent.py#L115)
+
+*Infrastructure & Resource Management*
+- Single Unity Catalog metastore with agent-specific schemas
+- Shared lakehouse with agent-specific table isolation patterns
+- Each agent maintains its own deployment workflow
+- Centralized MLflow Tracking Server aggregates metrics across agents
+- Shared resource pools (Vector Search, Models) with agent-specific indexes/versions
+
+*CI/CD Pipeline*
+- Parallel development workflows for each agent
+- Independent deployment cadences per agent
+- Cross-agent integration testing in Staging environment
+- Agent-specific validation gates:
+  - Agent Unit Tests (Development)
+  - Agent Integration Tests (Staging)
+  - Agent Validation Tests (Production)
+- Coordinated promotion when agents have dependencies
+- Batch Inferencing supports multi-agent evaluation scenarios
+
+**Complexity Level**: Medium - Multiple agents increase configuration complexity and require careful orchestration, but single account simplifies access control
+
+---
+
+##### Pattern 3: Multi-Environment Multi-Account Single-Agent View
+
+![AgentOps Multi-Environment Multi-Account Single-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Multi-Account_Single-Agent_View.png)
+
+**Use Case**: Enterprises requiring strict environment isolation with separate AWS accounts or Databricks workspaces per environment (dev/staging/prod), deploying a single agent across this isolated infrastructure.
+
+**Architecture Characteristics**:
+
+*Application Architecture*
+- Single agent deployed across completely isolated account boundaries
+- Each environment operates as a sovereign deployment unit
+- Agent code remains consistent; infrastructure varies significantly
+- Production deployment includes additional monitoring and feedback mechanisms
+
+*Configuration Management*
+- Environment-specific configuration files with account-aware parameters
+- Cross-account resource references managed through external IDs
+- Databricks Asset Bundles critical for environment abstraction:
+  - `databricks.yml` contains account-specific targets
+  - UC catalog and schema names parameterized per account
+  - Workspace URLs, service principals, and secrets injected at deployment time
+- Example bundle configuration:
+```yaml
+targets:
+  dev:
+    workspace:
+      host: https://dev-workspace.cloud.databricks.com
+    resources:
+      jobs:
+        deployment_job:
+          parameters:
+            - catalog: dev_catalog
+  staging:
+    workspace:
+      host: https://staging-workspace.cloud.databricks.com
+    resources:
+      jobs:
+        deployment_job:
+          parameters:
+            - catalog: staging_catalog
+```
+
+*Infrastructure & Resource Management*
+- Multiple Unity Catalog metastores (one per account)
+- Delta Sharing becomes critical for cross-account data access
+- Separate lakehouse instances per environment
+- Duplicated infrastructure: MLflow Tracking Servers, Vector Search indexes, Model registries
+- Network isolation requires PrivateLink or similar cross-account connectivity solutions
+- Each account maintains independent:
+  - Unity Catalog governance
+  - Secret scopes
+  - Cluster policies
+  - Service principals
+
+*CI/CD Pipeline*
+- Git repo branches map to accounts/environments
+- Cross-account deployment requires elevated permissions
+- Promotion workflow includes account-switching logic
+- Testing strategy adapted for account boundaries:
+  - Dev Catalog isolation testing
+  - Staging cross-account data sharing validation
+  - Production monitoring with account-specific observability tools
+- Continuous Deployment must handle cross-account IAM and permissions
+
+**Complexity Level**: Medium-High - Single agent simplifies application logic, but multi-account infrastructure significantly increases operational complexity
+
+---
+
+##### Pattern 4: Multi-Environment Multi-Account Multi-Agent View
+
+![AgentOps Multi-Environment Multi-Account Multi-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Multi-Account_Multi-Agent_View.png)
+
+**Use Case**: Large enterprises with complex agentic systems requiring both agent composition and strict account isolation, supporting multiple teams, compliance requirements, and large-scale production deployments.
+
+**Architecture Characteristics**:
+
+*Application Architecture*
+- Full matrix complexity: multiple agents × multiple accounts × multiple environments
+- Sophisticated agent orchestration patterns:
+  - Agent 1: Tool & Function Library (Development + Evaluation frameworks)
+  - Agent 2: Tool & Function Library (Specialized tools with independent lifecycle)
+  - Agent 3: Automated Evaluation (Cross-agent performance validation)
+- Each agent can be independently versioned and deployed across account boundaries
+- Production includes advanced patterns:
+  - Post-deployment workflows for validation
+  - Batch inferencing for large-scale evaluation
+  - Evaluation & Monitoring with SME feedback loops
+  - Model serving endpoints support multi-agent routing
+
+*Configuration Management*
+- Hierarchical configuration strategy:
+  - Base agent configurations (agent-specific YAML)
+  - Environment overlays (dev/staging/prod JSON)
+  - Account-specific overrides (cross-account resource mappings)
+- Databricks Asset Bundles with complex targeting:
+```yaml
+targets:
+  dev_account_agent1:
+    workspace: dev-workspace-url
+    variables:
+      catalog: dev_catalog
+      agent_name: agent1
+  staging_account_agent1:
+    workspace: staging-workspace-url  
+    variables:
+      catalog: staging_catalog
+      agent_name: agent1
+  # Repeated for agent2, agent3 across all environments
+```
+- Configuration validation enforced through:
+  - Pydantic schemas for agent definitions
+  - JSON Schema validation for environment configs
+  - Pre-deployment validation jobs
+
+*Infrastructure & Resource Management*
+- Multiple Unity Catalog metastores with complex sharing topology
+- Delta Sharing configured bi-directionally between accounts
+- Dedicated lakehouse infrastructure per account
+- Resource isolation strategy:
+  - Agent-specific compute clusters per account
+  - Separate Vector Search indexes per agent per environment
+  - Model registry partitioning by agent and environment
+- MLflow Tracking Servers federated across accounts
+- Cross-account networking:
+  - PrivateLink configurations for prod ↔ staging
+  - VPC peering or Transit Gateway for dev access
+  - Centralized DNS for endpoint resolution
+
+*CI/CD Pipeline*
+- Git repository structured with multiple project directories (M1, M2, M3)
+- Each agent has independent CI/CD workflows that coordinate during deployment
+- Multi-stage promotion with cross-account gates:
+  1. **Development Account**:
+     - Data Preparation Workflows per agent
+     - Structured Data Extraction with agent-specific schemas
+     - Parallel agent development workflows
+     - Agent Unit Tests (CI)
+     - SME Human-in-the-loop Feedback per agent
+  2. **Staging Account**:
+     - Cross-agent Integration Tests (CI)
+     - Agent Integration Tests per agent
+     - Model serving endpoint integration validation
+     - Performance regression testing
+  3. **Production Account**:
+     - Agent Validation Tests (CI) per agent
+     - Post-deployment workflows for smoke testing
+     - Batch Inferencing for production traffic evaluation
+     - Evaluation & Monitoring with continuous feedback
+     - SME Human-in-the-loop Feedback for production validation
+- Continuous Deployment orchestrates:
+  - Cross-agent dependency resolution
+  - Account promotion sequences
+  - Rollback strategies per agent per account
+
+*Operational Considerations*
+- Observability spans multiple dimensions:
+  - Per-agent metrics across accounts
+  - Cross-agent interaction tracking
+  - Account-level resource utilization
+  - Environment-specific SLAs and alerting
+- Cost management requires sophisticated attribution:
+  - Agent-level cost allocation
+  - Environment-specific budgets
+  - Cross-account data transfer costs
+- Security and compliance:
+  - Account-level audit logs
+  - Agent-specific access policies
+  - Cross-account data lineage tracking
+
+**Complexity Level**: High - Full operational maturity required, suitable for organizations with dedicated MLOps/AgentOps teams and mature governance processes
+
+---
+
+##### Choosing the Right Pattern
+
+| **Pattern** | **When to Use** | **Team Maturity** | **Primary Challenges** |
+|-------------|----------------|-------------------|------------------------|
+| Single-Account Single-Agent | Starting with agentic AI, POCs, single-purpose agents | Beginner | Initial setup, basic CI/CD |
+| Single-Account Multi-Agent | Composite agents, agent orchestration, microservices approach | Intermediate | Agent coordination, shared resources |
+| Multi-Account Single-Agent | Compliance requirements, environment isolation, enterprise governance | Intermediate-Advanced | Cross-account networking, IAM complexity |
+| Multi-Account Multi-Agent | Enterprise scale, multiple teams, complex agent systems | Advanced | Full operational overhead, requires dedicated AgentOps team |
+
+##### Common Pipeline Components Across All Patterns
+
+Regardless of complexity, all patterns share these foundational elements:
+
+*Source Control*
+- Git-based version control with branch strategies aligned to environments
+- Pull request workflows for code review
+- Commit triggers for CI/CD automation
+
+*Testing Strategy*
+- Unit tests in Development (agent logic validation)
+- Integration tests in Staging (cross-component validation)
+- Validation tests in Production (production traffic validation)
+
+*MLflow Integration*
+- Experiment tracking across all environments
+- Model versioning and registry
+- Metrics aggregation for agent performance
+
+*Lakehouse Foundation*
+- Unity Catalog for governance
+- Delta Lake for reliable data storage
+- Vector Search for retrieval augmentation
+- AI Tools & Functions for agent capabilities
+
+*Deployment Automation*
+- Databricks Asset Bundles as infrastructure-as-code
+- Environment-specific parameter injection
+- Automated rollback capabilities
+
+*Feedback Loops*
+- SME Human-in-the-loop validation
+- Continuous monitoring and evaluation
+- Metrics-driven improvements
+
+The progression from Pattern 1 to Pattern 4 represents an organization's journey from initial agentic AI adoption to enterprise-scale AgentOps maturity.

@@ -18,6 +18,16 @@ Given that Generative AI applications blend both software development and machin
 
 - **Programmatic Code Checks**: Deterministic, rule-based validations that check for specific conditions in outputs or system behavior. They are used for hard requirements that must always be met, to catch format errors, missing required fields, or policy violations, and when rules are clear and unambiguous. Code checks provide fast, reliable verification of requirements that don't need subjective judgment, catching errors that would be wasteful to evaluate with LLMs or humans.
 
+Collecting feedback is only the first step. The real challenge lies in converting subjective assessments into quantitative metrics you can trust and act upon. Unlike programmatic code checks, SME feedback, end-user ratings, and LLM judge scores require careful interpretation and calibration.
+
+The key challenges include:
+
+- **Consistency**: SMEs may evaluate the same output differently based on context, timing, or individual interpretation. Establishing inter-rater reliability requires clear rubrics and regular calibration sessions.
+- **Representativeness**: End-user feedback suffers from selection bias where users who provide ratings are often those with extreme experiences (very satisfied or very frustrated), not representative of typical usage.
+- **Alignment**: LLM judges must be continuously validated against human judgment. A judge that agrees with itself consistently but diverges from SME assessments provides false confidence.
+- **Actionability**: Raw feedback ("this response is bad") doesn't tell you what to fix. Effective feedback must be categorized and structured to reveal patterns, i.e. whether issues stem from retrieval quality, reasoning errors, tone problems, or factual inaccuracies.
+
+Success requires not just collecting feedback, but designing feedback mechanisms that produce reliable, representative, and actionable signals. This means defining clear evaluation criteria upfront, implementing quality controls on feedback collection, and continuously validating that your metrics actually correlate with real-world outcomes.
 
 ## Feedback flow
 
@@ -66,7 +76,7 @@ https://mlflow.org/docs/latest/genai/tracing/collect-user-feedback/#mlflow-feedb
 
 Consider an AI application that helps account managers with customer communications. The system generates different types of emails including meeting follow-ups and cold outreach messages, using context from previous customer interactions. In order to assess our application's quality, several sources of feedback are needed:
 
-1. Account managers (SMEs) verify if the email accurately reflects meeting discussions
+1. A select group of account managers (SMEs) verify if the email accurately reflects meeting discussions to guide the development process
 2. Account managers (end-users) indicate whether the generated email was helpful and saved them communication time
 3. LLM judges evaluate email relevance, tone and professionalism
 4. Automated rule-based checks ensure emails follow company guidelines
@@ -86,21 +96,22 @@ However, an actual account manager SME might disagree with this feedback and pro
 
 ![SME feedback](./feedback-principles_files/relevance-sme-feedback.png)
 
-Given this feedback, we might decide that the original Relevance metric is too general. Instead, we should break down the metric further to assess:
+Given this feedback, we might decide that the original Relevance metric is too general. Instead, we need evaluation criteria that assess whether proposed solutions actually fit the customer's specific context:
 
-- Did the solutions in the email adequately address the customer's stated concerns and pain points
-- If there was a product upsell, was it phrased in a tasteful and relevant way
+- **Solution Appropriateness**: Are the suggested solutions genuinely suited to address the customer's stated needs, or are they tangential product pushes?
+- **Context Alignment**: Does the response demonstrate understanding of the customer's actual situation and constraints?
 
-Update metric description 
+This refinement creates a custom evaluation judge that reflects the enterprise's actual quality standards rather than generic relevance.
 
 ### Analyze feedback manually first, then automate the process
 
 The pattern of starting with manual SME review, discovering evaluation criteria, then automating those criteria through LLM judges or code checks is fundamental to building reliable generative AI applications. This approach acknowledges that:
 
-1. **Requirements emerge through exploration**: Quality criteria are often unknown upfront
+1. **Requirements emerge through exploration**: Quality criteria are often unknown upfront. SMEs require empirical evidence to provide a credible description of how to evaluate an agent
 2. **Domain expertise is essential**: SMEs understand nuances that engineers may miss
 3. **Automation scales human judgment**: Once criteria are clear, LLM judges can apply them consistently at scale
 
-This iterative feedback process highlights the importance of translating business requirements to technical specifications. There has been debate about whether this translation should be done by product managers, domain experts, or engineers who become more "product-minded." Regardless of how responsibilities are allocated, the key is creating a collaborative environment where technical and business teams jointly discover what's possible with generative AI while maintaining high quality standards. 
+This iterative feedback process highlights the importance of translating business requirements to technical specifications. A common failure mode is for development teams to build in isolation, attempting to perfect the system before showing it to SMEs, only to discover fundamental misalignments too late. Early and continuous SME involvement prevents wasted effort by surfacing domain specific requirements, edge cases, and quality expectations before they become expensive to fix.
+There has been debate about whether this translation should be done by product managers, domain experts, or engineers who become more "product-minded." Regardless of how responsibilities are allocated, the key is creating a collaborative environment where technical and business teams jointly discover what's possible with generative AI while maintaining high quality standards. 
 
 This approach reflects the challenges identified by Shreya Shankar and Hamel Husain in their [AI Evals course](https://maven.com/parlance-labs/evals), particularly their "Three Gulfs" framework. Related research by Shankar et al. on ["Who Validates the Validators?"](https://dl.acm.org/doi/10.1145/3654777.3676450) demonstrates how evaluation criteria emerge through the iterative process of aligning automated evaluations with human judgment.

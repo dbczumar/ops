@@ -6,7 +6,7 @@ The following sections analyze four deployment architecture patterns for agentic
 
 ##### Pattern 1: Multi-Environment Single-Account Single-Agent View
 
-![AgentOps Multi-Environment Single-Account Single-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Single-Account_Single-Agent_View.png)
+![AgentOps Multi-Environment Single-Account Single-Agent View](./reference-architecture_files/figure-latex/AgentOps Multi-Environment Multi-Account Multi-Agent View.png)
 
 **Use Case**: Organizations starting with agentic AI or deploying a single, self-contained agent across development, staging, and production environments within a unified account structure.
 
@@ -48,7 +48,7 @@ The following sections analyze four deployment architecture patterns for agentic
 
 ##### Pattern 2: Multi-Environment Single-Account Multi-Agent View
 
-![AgentOps Multi-Environment Single-Account Multi-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Single-Account_Multi-Agent_View.png)
+![AgentOps Multi-Environment Single-Account Multi-Agent View](./reference-architecture_files/figure-latex/AgentOps Multi-Environment Multi-Account Multi-Agent View.png)
 
 **Use Case**: Organizations building composite agentic systems with multiple specialized agents (orchestrator + sub-agents) within a single account, requiring agent composition and inter-agent communication patterns.
 
@@ -100,7 +100,7 @@ The following sections analyze four deployment architecture patterns for agentic
 
 ##### Pattern 3: Multi-Environment Multi-Account Single-Agent View
 
-![AgentOps Multi-Environment Multi-Account Single-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Multi-Account_Single-Agent_View.png)
+![AgentOps Multi-Environment Multi-Account Single-Agent View](./reference-architecture_files/figure-latex/AgentOps Multi-Environment Multi-Account Multi-Agent View.png)
 
 **Use Case**: Enterprises requiring strict environment isolation with separate AWS accounts or Databricks workspaces per environment (dev/staging/prod), deploying a single agent across this isolated infrastructure.
 
@@ -168,7 +168,7 @@ targets:
 
 ##### Pattern 4: Multi-Environment Multi-Account Multi-Agent View
 
-![AgentOps Multi-Environment Multi-Account Multi-Agent View](./deployment-pipeline_files/figure-latex/AgentOps_Multi-Environment_Multi-Account_Multi-Agent_View.png)
+![AgentOps Multi-Environment Multi-Account Multi-Agent View](./reference-architecture_files/figure-latex/AgentOps Multi-Environment Multi-Account Multi-Agent View.png)
 
 **Use Case**: Large enterprises with complex agentic systems requiring both agent composition and strict account isolation, supporting multiple teams, compliance requirements, and large-scale production deployments.
 

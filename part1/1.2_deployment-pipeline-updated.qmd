@@ -1,8 +1,14 @@
-#### Anatomy of a deployment pipeline
-
-[DRAFT lucidchart](https://lucid.app/lucidchart/3c5f3fc1-ad2a-40f6-9f89-74b6dbb1fe14/edit?invitationId=inv_07475903-1de7-457b-88d1-74adfe4f4ba2&page=t3zIPiA-na8H#)
-
+#### Deployment Architecture Patterns for Agentic Systems
 The following sections analyze four deployment architecture patterns for agentic systems, progressing from simple to complex scenarios. Each pattern addresses different organizational needs around agent composition, account isolation, and multi-environment deployment strategies.
+
+The four deployment architectures combine these concepts in different ways:
+
+- **Multi-Environment Single-Account Single-Agent**: Three environments (dev/staging/prod) in one Databricks account, with one agent deployed across all environments. Simplest pattern with basic isolation.
+- **Multi-Environment Single-Account Multi-Agent**: Three environments in one account, with multiple specialized agents coordinated by a supervisor. Adds agent complexity while maintaining account simplicity.
+- **Multi-Environment Multi-Account Single-Agent**: Three environments in three separate accounts, with one agent per environment. Maximizes environment isolation while maintaining agent simplicity.
+- **Multi-Environment Multi-Account Multi-Agent**: Three environments in three separate accounts, with multiple specialized agents per environment. High complexity providing both environment isolation and agent specialization.
+
+The progression from Architecture 1 to Architecture 4 represents increasing complexity along two dimensions: account isolation (operational complexity and compliance strength) and agent specialization (coordination complexity and domain optimization). Organizations should choose the simplest architecture that meets their current needs, then evolve incrementally as requirements change.
 
 ##### Pattern 1: Multi-Environment Single-Account Single-Agent View
 
@@ -13,18 +19,21 @@ The following sections analyze four deployment architecture patterns for agentic
 **Architecture Characteristics**:
 
 *Application Architecture*
+
 - Single monolithic agent deployed as a cohesive unit
 - Agent serves a focused use case (e.g., customer support, document analysis)
 - Simple workflow progression: Data Preparation → Agent Development → Automated Evaluation → Deployment
 - Deployment destinations limited to a single app per environment
 
 *Configuration Management*
+
 - Environment-specific configurations managed through declarative YAML/JSON files
 - Single set of configuration parameters across the pipeline
 - Streamlined configuration: one agent definition, three environment overlays (dev/staging/prod)
 - Model serving endpoints configured per environment with consistent naming conventions
 
 *Infrastructure & Resource Management*
+
 - Single Unity Catalog metastore shared across all environments
 - Shared lakehouse infrastructure with environment-specific catalog/schema isolation
 - MLflow Tracking Server deployed in each workspace for experiment tracking
@@ -32,6 +41,7 @@ The following sections analyze four deployment architecture patterns for agentic
 - Common set of supporting resources: Vector Search, AI Tools & Functions, Models tables
 
 *CI/CD Pipeline*
+
 - Git-driven workflow with single project repository (M1)
 - Automated promotion path: Dev → Staging → Production
 - Environment-specific testing gates:
@@ -55,6 +65,7 @@ The following sections analyze four deployment architecture patterns for agentic
 **Architecture Characteristics**:
 
 *Application Architecture*
+
 - Multi-agent composition with clear separation of concerns:
   - Agent 1: Tool & Function Library (provides shared capabilities)
   - Agent 2: Tool & Function Library (alternative implementation or specialized tools)
@@ -64,6 +75,7 @@ The following sections analyze four deployment architecture patterns for agentic
 - Supports both parallel agent execution and sequential agent chaining
 
 *Configuration Management*
+
 - Multiple YAML/JSON configuration files per agent
 - Shared configuration schemas enforced through Pydantic models
 - Environment-specific overlays for each agent:
@@ -77,6 +89,7 @@ The following sections analyze four deployment architecture patterns for agentic
   - [configuration loaded into `BaseAgent` class](https://github.com/databricks-field-eng/genai-customer-support-demo/blob/main/telco_support_agent/agents/base_agent.py#L115)
 
 *Infrastructure & Resource Management*
+
 - Single Unity Catalog metastore with agent-specific schemas
 - Shared lakehouse with agent-specific table isolation patterns
 - Each agent maintains its own deployment workflow
@@ -84,6 +97,7 @@ The following sections analyze four deployment architecture patterns for agentic
 - Shared resource pools (Vector Search, Models) with agent-specific indexes/versions
 
 *CI/CD Pipeline*
+
 - Parallel development workflows for each agent
 - Independent deployment cadences per agent
 - Cross-agent integration testing in Staging environment
@@ -107,12 +121,14 @@ The following sections analyze four deployment architecture patterns for agentic
 **Architecture Characteristics**:
 
 *Application Architecture*
+
 - Single agent deployed across completely isolated account boundaries
 - Each environment operates as a sovereign deployment unit
 - Agent code remains consistent; infrastructure varies significantly
 - Production deployment includes additional monitoring and feedback mechanisms
 
 *Configuration Management*
+
 - Environment-specific configuration files with account-aware parameters
 - Cross-account resource references managed through external IDs
 - Databricks Asset Bundles critical for environment abstraction:
@@ -141,6 +157,7 @@ targets:
 ```
 
 *Infrastructure & Resource Management*
+
 - Multiple Unity Catalog metastores (one per account)
 - Delta Sharing becomes critical for cross-account data access
 - Separate lakehouse instances per environment
@@ -153,6 +170,7 @@ targets:
   - Service principals
 
 *CI/CD Pipeline*
+
 - Git repo branches map to accounts/environments
 - Cross-account deployment requires elevated permissions
 - Promotion workflow includes account-switching logic
@@ -175,6 +193,7 @@ targets:
 **Architecture Characteristics**:
 
 *Application Architecture*
+
 - Full matrix complexity: multiple agents × multiple accounts × multiple environments
 - Sophisticated agent orchestration patterns:
   - Agent 1: Tool & Function Library (Development + Evaluation frameworks)
@@ -188,6 +207,7 @@ targets:
   - Model serving endpoints support multi-agent routing
 
 *Configuration Management*
+
 - Hierarchical configuration strategy:
   - Base agent configurations (agent-specific YAML)
   - Environment overlays (dev/staging/prod JSON)
@@ -213,6 +233,7 @@ targets:
   - Pre-deployment validation jobs
 
 *Infrastructure & Resource Management*
+
 - Multiple Unity Catalog metastores with complex sharing topology
 - Delta Sharing configured bi-directionally between accounts
 - Dedicated lakehouse infrastructure per account
@@ -227,6 +248,7 @@ targets:
   - Centralized DNS for endpoint resolution
 
 *CI/CD Pipeline*
+
 - Git repository structured with multiple project directories (M1, M2, M3)
 - Each agent has independent CI/CD workflows that coordinate during deployment
 - Multi-stage promotion with cross-account gates:
@@ -253,6 +275,7 @@ targets:
   - Rollback strategies per agent per account
 
 *Operational Considerations*
+
 - Observability spans multiple dimensions:
   - Per-agent metrics across accounts
   - Cross-agent interaction tracking
@@ -285,32 +308,38 @@ targets:
 Regardless of complexity, all patterns share these foundational elements:
 
 *Source Control*
+
 - Git-based version control with branch strategies aligned to environments
 - Pull request workflows for code review
 - Commit triggers for CI/CD automation
 
 *Testing Strategy*
+
 - Unit tests in Development (agent logic validation)
 - Integration tests in Staging (cross-component validation)
 - Validation tests in Production (production traffic validation)
 
 *MLflow Integration*
+
 - Experiment tracking across all environments
 - Model versioning and registry
 - Metrics aggregation for agent performance
 
 *Lakehouse Foundation*
+
 - Unity Catalog for governance
 - Delta Lake for reliable data storage
 - Vector Search for retrieval augmentation
 - AI Tools & Functions for agent capabilities
 
 *Deployment Automation*
+
 - Databricks Asset Bundles as infrastructure-as-code
 - Environment-specific parameter injection
 - Automated rollback capabilities
 
 *Feedback Loops*
+
 - SME Human-in-the-loop validation
 - Continuous monitoring and evaluation
 - Metrics-driven improvements

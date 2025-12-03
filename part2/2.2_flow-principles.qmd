@@ -76,6 +76,12 @@ The steps below assume initial project steps have been completed, including use 
    - Run evaluations on [production traces](https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/production-monitoring).
    - Close the loop with SMEs and end users; feed new edge cases back into datasets and judges.
 
+Once deployed, teams need visibility into both operational and quality metrics:
+
+![mlflow-operational-metrics](./feedback-principles_files/mlflow-operational-metrics.png)
+
+![mlflow-assessment-metrics](./feedback-principles_files/llm-generation-metrics.png)
+
 In short, development and evaluation quickly become the same loop. After the early “vibe check,” let LLM judges and SME reviews decide where to invest engineering time next. Judges give you repeatable numbers; SMEs bring grounded judgment—turning evaluation into a quantitative roadmap for product decisions and, just as important, a transparent basis for building stakeholder trust.
 
 ### Proactively Manage Evaluation Costs
@@ -343,7 +349,6 @@ This workflow ensures safe model deployment with quick rollback capabilities whi
 
 # Further reading:
 
-- [Optimizing LLM prompts for low latency](_Optimizing LLM prompts for low latency | Building with AI_. (n.d.). incident.io. https://incident.io/building-with-ai/optimizing-llm-prompts#case-study-planning-grafana-dashboards-for-an-incident) 
-- [From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres](Hamel Husain. (2025, August 15). _From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres_ [Video]. YouTube. https://www.youtube.com/watch?v=N-qAOv_PNPc)
-- [LLM Inference Performance Engineering: Best Practices](_LLM Inference Performance Engineering: Best Practices | DataBricks blog_. (n.d.). Databricks. https://www.databricks.com/blog/llm-inference-performance-engineering-best-practices)
-
+- [Optimizing LLM prompts for low latency](https://incident.io/building-with-ai/optimizing-llm-prompts#case-study-planning-grafana-dashboards-for-an-incident)
+- [From Noob to Automated Evals In A Week (as a PM) w/Teresa Torres](https://www.youtube.com/watch?v=N-qAOv_PNPc)
+- [LLM Inference Performance Engineering: Best Practices](https://www.databricks.com/blog/llm-inference-performance-engineering-best-practices)

@@ -18,9 +18,5 @@ This book covers the evolution from MLOps to LLMOps to AgentOps, focusing on:
 - Product Managers overseeing AI initiatives
 - Platform Engineers deploying agent infrastructure
 
-## How to Use This Book
-
-Each chapter builds on previous concepts while remaining modular enough to reference independently. Code examples are provided throughout, with complete implementations available in the `examples/` directory.
-
 ---
 
